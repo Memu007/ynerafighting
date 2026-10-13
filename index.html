@@ -32,7 +32,9 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 12px;
   }
 
   #cabinet {
@@ -161,6 +163,18 @@
     margin-bottom: 4px;
     font-size: 11px;
   }
+
+  [hidden] {display:none !important;}
+  #player-panel, #guide, #market {width:100%;max-width:840px;font:16px/1.5 system-ui,sans-serif;margin:8px 0;background:#151d2c;border:1px solid #394b63;border-radius:10px;padding:14px;}
+  #player-panel {display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  #player-panel strong {font-size:24px;color:#ffda62;display:block;}
+  #player-panel meter {width:100%;height:18px;display:block;}
+  #market .offers {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  #market button {text-align:left;background:#233c38;color:white;border:2px solid #72b6a3;border-radius:8px;padding:14px;font:16px/1.5 system-ui;cursor:pointer;}
+  #market button:disabled {opacity:.5;cursor:default;}
+  #guide summary {cursor:pointer;color:#ffda62;font-weight:bold;}
+  #guide button {font:inherit;padding:8px 16px;cursor:pointer;}
+  @media(max-width:540px){#top-bar{font-size:8px;flex-wrap:wrap;gap:8px}#player-panel{gap:6px;font-size:14px;padding:10px}#player-panel strong{font-size:20px}#market .offers{grid-template-columns:1fr}#cabinet{border-width:3px}}
 </style>
 </head>
 <body>
@@ -173,6 +187,22 @@
   </div>
 </div>
 
+<details id="guide" open>
+  <summary>Cómo jugar · Guía de la semana</summary>
+  <p>El lunes Osvaldo te presenta al próximo rival. Tenés tres sesiones: lunes, miércoles y viernes. Elegí qué mejorar según sus puntos fuertes.</p>
+  <p><b>Entrenar</b> aumenta tus estadísticas y suma fatiga. <b>Descansar gratis</b> usa una sesión y baja hasta 25 puntos de fatiga. La fatiga reduce tu vida inicial y movimiento.</p>
+  <p><b>Comida ($40)</b>: baja hasta 8 de fatiga y reduce el cansancio de los entrenamientos de esa semana. <b>Masaje ($60)</b>: baja hasta 30, sin consumir una sesión.</p>
+  <p>El sábado solo podés prepararte o pelear. Cobrás un premio al terminar; si perdés, podés volver a intentar tras otra semana de preparación.</p>
+  <p>Flechas: moverte · Z: piña · X: patada · C: cubrirte · V: especial con energía llena. Espacio: avanzar escenas. En celular usá los botones.</p>
+  <p>Se guarda al completar preparación. Si cerrás durante una pelea, retomás antes de pelear, en el mismo navegador y dirección.</p>
+  <button id="guide-close">Entendido · cerrar guía</button>
+</details>
+<div id="player-panel" aria-label="Estado de Lautaro"></div>
+<section id="market" hidden aria-label="Tienda de recuperación">
+  <b>Preparación y recuperación</b>
+  <div class="offers"><button id="buy-food"></button><button id="buy-massage"></button></div>
+  <p id="market-message" role="status"></p>
+</section>
 <div id="cabinet">
   <canvas id="game" width="640" height="400"></canvas>
   <div id="crt-overlay"></div>
@@ -1985,10 +2015,39 @@
     modal.style.display = 'none';
   });
 
+  const guide=document.getElementById('guide');
+  try{guide.open=localStorage.getItem('cf-guide-seen')!=='1';}catch{}
+  document.getElementById('guide-close').addEventListener('click',()=>{guide.open=false;try{localStorage.setItem('cf-guide-seen','1');}catch{}});
+  document.getElementById('buy-food').addEventListener('click',()=>recover('food'));
+  document.getElementById('buy-massage').addEventListener('click',()=>recover('massage'));
+  let panelSignature='';
+  function updatePanels(){
+    const visible=![STATE.TITLE,STATE.INTRO_STORY].includes(gameState);
+    const shopping=gameState===STATE.GYM&&!minigame.active;
+    document.getElementById('player-panel').hidden=!visible;
+    document.getElementById('market').hidden=!shopping;
+    const signature=[gameState,playerStats.money,playerStats.fatigue,playerStats.aguante,playerStats.goodFood,player&&player.hp,player&&player.maxHp,recoveryMessage].join('|');
+    if(signature===panelSignature)return;panelSignature=signature;
+    const hp=Math.round((110+playerStats.aguante*18)*(1-playerStats.fatigue/350));
+    const inFight=gameState===STATE.FIGHT&&player;
+    const life=inFight?Math.max(0,Math.ceil(player.hp)):hp;
+    const maxLife=inFight?player.maxHp:110+playerStats.aguante*18;
+    document.getElementById('player-panel').innerHTML=`<div>${inFight?'Vida actual':'Vida para pelear'}<strong>${life} / ${maxLife}</strong><meter min="0" max="${maxLife}" value="${life}"></meter></div><div>Fatiga<strong>${playerStats.fatigue} / 70</strong><meter min="0" max="70" value="${playerStats.fatigue}"></meter></div><div>Dinero disponible<strong>$${playerStats.money}</strong></div>`;
+    for(const [kind,cost,reduction,label] of [['food',40,8,'Comida semanal'],['massage',60,30,'Masaje']]){
+      const remaining=Math.max(0,playerStats.fatigue-reduction);
+      const futureHp=Math.round((110+playerStats.aguante*18)*(1-remaining/350));
+      const button=document.getElementById('buy-'+kind);
+      button.disabled=!shopping||playerStats.money<cost||(kind==='food'?playerStats.goodFood:playerStats.fatigue===0);
+      button.innerHTML=`<b>${label} · $${cost}</b><br>Fatiga: ${playerStats.fatigue} → ${remaining}<br>Vida para pelear: ${hp} → ${futureHp}<br>Te quedan $${Math.max(0,playerStats.money-cost)}${kind==='food'?'<br>Entrenar cansa menos esta semana':''}`;
+    }
+    document.getElementById('market-message').textContent=recoveryMessage||'Comprar no consume un día. El descanso gratis se elige dentro del gimnasio.';
+  }
+
   // Iniciar Loop
   function loop() {
     update();
     draw();
+    updatePanels();
     requestAnimationFrame(loop);
   }
   loop();

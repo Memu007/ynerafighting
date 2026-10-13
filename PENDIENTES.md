@@ -8,18 +8,17 @@ Eliminar un pendiente únicamente después de implementarlo y verificarlo. Actua
 Este archivo es la referencia actual; docs/GDD.md y docs/ROADMAP.md son antecedentes cuando entren en conflicto.
 
 ## Estado comprobado de esta sesión
-El checkout local contiene index.html, retratos y tools/check-game.cjs aún sin commit, y README.md modificado. No asumir que el juego ya está publicado en GitHub.
-El README local describe guardado, estilos de rivales y ejercicios distintos; verificar código y pruebas antes de darlos por cerrados.
+El juego base ya está publicado en index.html, con retratos y tools/check-game.cjs.
+Pruebas de lógica pasan para guardado/continuación, secuencias de entrenamiento, compras, resultados y transiciones.
+Se añadió guía inicial que se cierra y recuerda su lectura; panel grande de vida, fatiga y dinero; tienda con precio, fatiga/vida previstas y saldo restante. Diseño adaptable a celular.
+Verificación visual en navegador pendiente: Playwright está instalado pero su ejecutable Chromium no está disponible. No afirmar que se probó visualmente ni que el balance está resuelto.
 
 ## Pendientes, en orden
 
 ### 1. Cerrar la base jugable
 - [ ] Verificar guardado y continuación, estilos de rivales y pistas de Osvaldo, y ejercicios distintos.
 - [ ] Comprobar balance jugando: hubo ajustes demasiado difíciles y demasiado fáciles. Las pruebas de lógica no prueban diversión.
-- [ ] Subir el juego y sus recursos al repo sin borrar documentación ni mockup existentes.
-- [ ] Tutorial inicial breve: controles, entrenamiento, fatiga, descanso, preparación y pelea. Mostrarlo una vez; permitir consultarlo.
-- [ ] Agrandar panel de vida, fatiga, plata y estadísticas; mostrar números y efectos de entrenamiento legibles.
-- [ ] Rehacer tienda con tarjetas claras: precio, recuperación y estado previsto antes de comprar.
+- [ ] Completar el panel grande con estadísticas de fuerza, velocidad, aguante y técnica; vida, fatiga y dinero ya están ampliados.
 - [ ] Conservar el sábado con solo preparación (comida/masaje) o empezar pelea, sin ejercicios.
 - [ ] Mostrar explicaciones iniciales una sola vez y permitir saltar transiciones repetidas. Mantener consejos específicos de cada próximo rival.
 
@@ -48,4 +47,4 @@ El README local describe guardado, estilos de rivales y ejercicios distintos; ve
 - [ ] Evitar un 50–50 arbitrario como única mecánica y evitar que aceptar sea siempre la mejor opción.
 
 ## Siguiente paso
-Verificar la base local y publicarla; luego tutorial, panel grande y tienda. No afirmar que los sistemas de esta lista ya están implementados.
+Verificar visualmente panel y tienda en escritorio/celular; completar estadísticas grandes y continuar progresión económica. Mantener el balance como pendiente hasta probar jugabilidad.
