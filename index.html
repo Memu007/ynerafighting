@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Conurbano Fighter 16-Bit: De Villa Madero al Octágono</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --crt-bg: #07070c;
+    --gold: #ffcc00;
+    --red: #e62e2e;
+    --blue: #2b65ec;
+    --green: #2ee653;
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--crt-bg);
+    color: #fff;
+    font-family: 'Press Start 2P', monospace, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  #cabinet {
+    position: relative;
+    width: 100%;
+    max-width: 840px;
+    aspect-ratio: 16 / 10;
+    background: #000;
+    border: 6px solid #2a2a38;
+    border-radius: 14px;
+    box-shadow: 0 0 35px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Efecto CRT Scanlines 90s */
+  #crt-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: 
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
+      radial-gradient(circle at center, transparent 62%, rgba(0, 0, 0, 0.68) 100%);
+    background-size: 100% 4px, 100% 100%;
+    z-index: 15;
+  }
+
+  #top-bar {
+    width: 100%;
+    max-width: 840px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px;
+    font-size: 10px;
+    color: #aaa;
+  }
+
+  .btn-retro {
+    background: #1c1c28;
+    color: #fff;
+    border: 2px solid var(--gold);
+    padding: 6px 10px;
+    font-family: inherit;
+    font-size: 9px;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 0 3px 0 #886600;
+  }
+
+  .btn-retro:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #886600;
+  }
+
+  /* Controles táctiles / mouse en pantalla */
+  #controls-bar {
+    width: 100%;
+    max-width: 840px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 6px;
+    gap: 10px;
+  }
+
+  .pad-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .ctrl-btn {
+    background: #232334;
+    color: #fff;
+    border: 3px solid #555577;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #11111a;
+    touch-action: manipulation;
+  }
+
+  .ctrl-btn:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #11111a;
+  }
+
+  .btn-punch { background: #991f1f; border-color: #ff5555; }
+  .btn-kick { background: #1f4e99; border-color: #5599ff; }
+  .btn-block { background: #2d7a3e; border-color: #66dd88; }
+  .btn-spec { background: #997300; border-color: #ffdd44; color: #000; font-weight: bold; }
+
+  /* Modal Subagentes */
+  #subagent-modal {
+    position: absolute;
+    inset: 14px;
+    background: rgba(10, 10, 18, 0.96);
+    border: 3px solid var(--gold);
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    padding: 16px;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+
+  .agent-card {
+    border-left: 4px solid var(--gold);
+    background: #161622;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .agent-title {
+    color: var(--gold);
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+  <div>CONURBANO FIGHTER II - 16-BIT EDITION</div>
+  <div style="display:flex; gap:8px;">
+    <button class="btn-retro" id="btn-audio">🔊 AUDIO: ON</button>
+    <button class="btn-retro" id="btn-subagents">🤖 SUBAGENTES</button>
+  </div>
+</div>
+
+<div id="cabinet">
+  <canvas id="game" width="640" height="400"></canvas>
+  <div id="crt-overlay"></div>
+
+  <div id="subagent-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="color:var(--gold); font-size:12px;">CONSEJO DE SUBAGENTES (MODO ADVERSARIAL)</span>
+      <button class="btn-retro" id="btn-close-modal">CERRAR [X]</button>
+    </div>
+    <div id="subagent-content"></div>
+  </div>
+</div>
+
+<div id="controls-bar">
+  <div class="pad-group">
+    <button class="ctrl-btn" data-key="ArrowLeft">◀ IZQ</button>
+    <button class="ctrl-btn" data-key="ArrowRight">DER ▶</button>
+  </div>
+  <div class="pad-group">
+    <button class="ctrl-btn btn-punch" data-key="KeyZ">Z: PIÑA</button>
+    <button class="ctrl-btn btn-kick" data-key="KeyX">X: PATADA</button>
+    <button class="ctrl-btn btn-block" data-key="KeyC">C: GUARDIA</button>
+    <button class="ctrl-btn btn-spec" data-key="KeyV">V: ESPECIAL</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // ==========================================
+  // 1. SINTETIZADOR CHIPTUNE 16-BIT (WEB AUDIO)
+  // ==========================================
+  let audioCtx = null;
+  let audioEnabled = true;
+  let bgmInterval = null;
+  let currentTrack = '';
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playTone(freq, type, duration, vol = 0.08, slide = 0) {
+    if (!audioEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      if (slide !== 0) {
+        osc.frequency.linearRampToValueAtTime(Math.max(40, freq + slide), audioCtx.currentTime + duration);
+      }
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+  }
+
+  function sfxHit(heavy = false) {
+    playTone(heavy ? 110 : 170, 'sawtooth', heavy ? 0.18 : 0.1, heavy ? 0.15 : 0.1, -90);
+    playTone(heavy ? 65 : 95, 'square', heavy ? 0.22 : 0.1, 0.12, -40);
+  }
+
+  function sfxWeakHit() {
+    playTone(240, 'triangle', 0.06, 0.06, -30);
+  }
+
+  function sfxBlock() {
+    playTone(520, 'square', 0.07, 0.08, 120);
+  }
+
+  function sfxParry() {
+    playTone(680, 'square', 0.08, 0.12, 300);
+    setTimeout(() => playTone(980, 'square', 0.12, 0.12, 200), 60);
+  }
+
+  function sfxSelect() {
+    playTone(440, 'square', 0.06, 0.07, 180);
+  }
+
+  function sfxKO() {
+    playTone(190, 'sawtooth', 0.45, 0.18, -150);
+    setTimeout(() => playTone(120, 'sawtooth', 0.55, 0.18, -80), 150);
+  }
+
+  function startBGM(track) {
+    if (currentTrack === track) return;
+    currentTrack = track;
+    if (bgmInterval) clearInterval(bgmInterval);
+    let step = 0;
+
+    const melodies = {
+      madero: [146, 146, 174, 146, 196, 185, 146, 130],
+      vs: [220, 261, 293, 329, 293, 261, 220, 196],
+      gym: [196, 246, 293, 246, 220, 261, 329, 261],
+      ufc: [164, 164, 196, 220, 246, 220, 196, 146]
+    };
+
+    bgmInterval = setInterval(() => {
+      if (!audioEnabled || !audioCtx) return;
+      const notes = melodies[track] || melodies.madero;
+      const f = notes[step % notes.length];
+      playTone(f, step % 2 === 0 ? 'square' : 'sawtooth', 0.16, 0.035);
+      if (step % 4 === 0) playTone(f / 2, 'triangle', 0.2, 0.05);
+      step++;
+    }, 210);
+  }
+
+  document.getElementById('btn-audio').addEventListener('click', (e) => {
+    initAudio();
+    audioEnabled = !audioEnabled;
+    e.target.textContent = audioEnabled ? '🔊 AUDIO: ON' : '🔇 AUDIO: OFF';
+  });
+
+  // ========================================================
+  // 2. MOTOR DE RETRATOS PIXEL-ART 90s (ESTILO STREET FIGHTER)
+  // ========================================================
+  // Dibuja los retratos que aprobamos (Lautaro, Kevin, Don Osvaldo, El Braian y Henderson)
+  // con píxeles grandes, dithering de los 90 y bordes marcados.
+  const illustratedPortraits = {};
+  for (const [id, src] of Object.entries({"lautaro": "assets/portraits/lautaro.png", "osvaldo": "assets/portraits/osvaldo.png", "kevin": "assets/portraits/kevin.png", "braian": "assets/portraits/braian.png", "henderson": "assets/portraits/henderson.png"})) {
+    const image = new Image();
+    image.src = src;
+    illustratedPortraits[id] = image;
+  }
+  const portraitCache = {};
+
+  function getPortraitCanvas(charId, bruised = false) {
+    if (['tito','rulo','nico'].includes(charId)) {
+      const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');
+      const n=['tito','rulo','nico'].indexOf(charId);
+      g.fillStyle=['#533c27','#392b54','#194442'][n];g.fillRect(0,0,48,48);
+      g.fillStyle=['#a65b24','#7949aa','#238786'][n];g.fillRect(6,32,36,16);
+      g.fillStyle=['#b87954','#e6b48e','#b58867'][n];g.fillRect(13,9,22,27);
+      g.fillStyle='#241d1b';g.fillRect(12,6,24,8);if(n===1)g.fillRect(10,8,5,20);
+      g.fillRect(17,19,4,3);g.fillRect(28,19,4,3);g.fillRect(21,29,9,2);
+      return c;
+    }
+
+    const illustrated = illustratedPortraits[charId];
+    if (illustrated) {
+      if (illustrated.complete && illustrated.naturalWidth) return illustrated;
+      const loading=document.createElement('canvas');loading.width=loading.height=72;
+      const g=loading.getContext('2d');g.fillStyle='#141828';g.fillRect(0,0,72,72);
+      g.fillStyle='#ffcc00';g.font='10px monospace';g.fillText('CARGANDO',10,38);
+      return loading;
+    }
+    const key = charId + (bruised ? '_bruised' : '');
+    if (portraitCache[key]) return portraitCache[key];
+
+    const pCanvas = document.createElement('canvas');
+    pCanvas.width = 48;
+    pCanvas.height = 48;
+    const pCtx = pCanvas.getContext('2d');
+    pCtx.imageSmoothingEnabled = false;
+
+    const px = (x, y, w, h, col) => {
+      pCtx.fillStyle = col;
+      pCtx.fillRect(x, y, w, h);
+    };
+
+    // Sombreado punteado estilo 16-bits (Dithering)
+    const dither = (x, y, w, h, colA, colB) => {
+      for (let iy = y; iy < y + h; iy++) {
+        for (let ix = x; ix < x + w; ix++) {
+          pCtx.fillStyle = (ix + iy) % 2 === 0 ? colA : colB;
+          pCtx.fillRect(ix, iy, 1, 1);
+        }
+      }
+    };
+
+    if (charId === 'lautaro') {
+      // Fondo nocturno estación Madero
+      dither(0, 0, 48, 48, '#101828', '#18243c');
+      // Buzo gris con capucha
+      px(6, 36, 36, 12, '#3a414a');
+      dither(8, 38, 12, 10, '#2a3038', '#3a414a');
+      px(19, 40, 2, 8, '#cfd6df'); // cordón izquierdo
+      px(27, 40, 2, 8, '#cfd6df'); // cordón derecho
+      // Cuello y cara
+      px(16, 29, 16, 9, '#c68b67');
+      px(12, 13, 24, 19, '#e0a47e');
+      dither(12, 16, 6, 15, '#b87b56', '#e0a47e'); // Sombra 90s mejilla
+      // Raspones / Herida en la mejilla (como en la imagen aprobada)
+      px(14, 23, 5, 1, '#a81818');
+      px(16, 21, 1, 5, '#a81818');
+      if (bruised) {
+        px(26, 19, 6, 4, '#622868'); // Ojo morado post-robo
+        px(24, 27, 4, 2, '#a81818'); // Sangre labio
+      }
+      // Ojos serios mirando al rival
+      px(16, 17, 6, 2, '#1a1412'); // Ceja izq
+      px(26, 17, 6, 2, '#1a1412'); // Ceja der
+      px(17, 19, 4, 2, '#ffffff');
+      px(19, 19, 2, 2, '#1a1412');
+      px(27, 19, 4, 2, '#ffffff');
+      px(29, 19, 2, 2, '#1a1412');
+      // Nariz y boca firme
+      px(23, 20, 2, 5, '#b87b56');
+      px(19, 27, 9, 2, '#6b3b2a');
+      // Pelo oscuro
+      px(11, 11, 25, 5, '#181820');
+      // Gorra azul gastada mirando a la derecha
+      px(11, 4, 24, 8, '#2c4268');
+      dither(11, 4, 12, 7, '#1d2d47', '#2c4268');
+      px(20, 10, 22, 3, '#1d2d47'); // Visera
+    } 
+    else if (charId === 'kevin') {
+      // Fondo oscuro estación
+      dither(0, 0, 48, 48, '#1a1224', '#0e0a14');
+      // Campera deportiva azul con tiras blancas
+      px(6, 35, 36, 13, '#1049a8');
+      px(8, 36, 2, 12, '#ffffff');
+      px(11, 36, 2, 12, '#ffffff');
+      px(35, 36, 2, 12, '#ffffff');
+      px(38, 36, 2, 12, '#ffffff');
+      // Cadena de oro gruesa en el cuello
+      px(17, 34, 14, 7, '#181818');
+      px(18, 37, 12, 3, '#ffcc00');
+      px(20, 40, 8, 2, '#d49b00');
+      // Cara bronceada con sonrisa sobradora
+      px(13, 13, 22, 20, '#d8945c');
+      dither(28, 15, 7, 16, '#ad6e3b', '#d8945c');
+      // Cejas arqueadas con corte
+      px(15, 16, 7, 2, '#1a120b');
+      px(17, 16, 1, 2, '#d8945c'); // corte en la ceja
+      px(25, 15, 7, 2, '#1a120b');
+      // Ojos desafiantes mirando a la izquierda
+      px(16, 18, 5, 2, '#ffffff');
+      px(16, 18, 2, 2, '#111');
+      px(26, 18, 5, 2, '#ffffff');
+      px(26, 18, 2, 2, '#111');
+      // Sonrisa provocadora blanca
+      px(18, 26, 11, 3, '#ffffff');
+      px(18, 25, 12, 1, '#5a2d18');
+      px(18, 29, 10, 1, '#5a2d18');
+      // Gorra roja hacia atrás (estilo imagen aprobada)
+      px(12, 4, 24, 9, '#d62424');
+      dither(24, 4, 12, 8, '#961414', '#d62424');
+      px(16, 9, 10, 3, '#7a1010'); // Tira ajustable atrás
+      px(33, 10, 11, 3, '#d62424'); // Visera para atrás
+    }
+    else if (charId === 'osvaldo') {
+      // Fondo ladrillos Club Social Madero
+      dither(0, 0, 48, 48, '#4a1818', '#2c0d0d');
+      // Musculosa y toalla blanca al cuello
+      px(8, 35, 32, 13, '#333333');
+      px(11, 32, 7, 16, '#e6e6e6'); // Toalla izq
+      px(30, 32, 7, 16, '#cccccc'); // Toalla der
+      // Rostro curtido con arrugas
+      px(13, 11, 22, 22, '#c88862');
+      dither(13, 14, 7, 18, '#9e6340', '#c88862');
+      px(17, 14, 14, 1, '#7c482b'); // Arruga frente
+      px(16, 16, 16, 1, '#7c482b');
+      // Pelo y bigote canoso tupido
+      px(12, 5, 24, 7, '#b8bfc6');
+      dither(12, 5, 24, 4, '#ffffff', '#8c9399');
+      px(15, 17, 7, 2, '#8c9399'); // Cejas grises
+      px(26, 17, 7, 2, '#8c9399');
+      px(17, 19, 4, 2, '#111');
+      px(27, 19, 4, 2, '#111');
+      // Bigote clásico Don Osvaldo
+      px(16, 25, 16, 4, '#d0d6dc');
+      px(15, 27, 4, 2, '#9aa0a6');
+      px(29, 27, 4, 2, '#9aa0a6');
+    }
+    else if (charId === 'braian') {
+      // Fondo calle nocturna
+      dither(0, 0, 48, 48, '#0f241c', '#08120e');
+      // Campera verde y gris con cadena
+      px(6, 35, 36, 13, '#2e6f40');
+      px(10, 35, 6, 13, '#88929a');
+      px(32, 35, 6, 13, '#88929a');
+      px(18, 37, 12, 2, '#ffcc00'); // Cadena
+      // Cara y sonrisa picante
+      px(14, 13, 20, 20, '#d29258');
+      dither(26, 14, 8, 18, '#a06835', '#d29258');
+      px(16, 17, 6, 2, '#111');
+      px(26, 16, 6, 2, '#111');
+      px(17, 19, 4, 2, '#fff');
+      px(17, 19, 2, 2, '#111');
+      px(27, 19, 4, 2, '#fff');
+      px(27, 19, 2, 2, '#111');
+      px(18, 26, 11, 3, '#fff');
+      // Gorra verde con visera blanca/verde
+      px(13, 4, 22, 8, '#178a3d');
+      px(8, 10, 22, 3, '#e8f5ec');
+    }
+    else if (charId === 'henderson') {
+      // Fondo octágono UFC / Bandera USA
+      px(0, 0, 48, 48, '#1a244d');
+      for (let i = 0; i < 48; i += 6) {
+        px(18, i, 30, 3, '#b81d2c');
+        px(18, i + 3, 30, 3, '#e6e6e6');
+      }
+      // Trapecios y hombros gigantes de campeón MMA
+      px(2, 34, 44, 14, '#c4835a');
+      dither(2, 35, 14, 13, '#945a36', '#c4835a');
+      // Cabeza rapada marcial con barba rasurada
+      px(13, 9, 22, 24, '#c4835a');
+      dither(13, 7, 22, 6, '#5c4033', '#c4835a'); // Rapado
+      dither(14, 23, 20, 10, '#6e4730', '#9e6847'); // Barba
+      // Ceño fruncido
+      px(15, 15, 8, 3, '#2b1910');
+      px(25, 15, 8, 3, '#2b1910');
+      px(17, 18, 4, 2, '#fff');
+      px(18, 18, 2, 2, '#111');
+      px(27, 18, 4, 2, '#fff');
+      px(28, 18, 2, 2, '#111');
+      // Boca abierta con protector bucal tricolor (azul/blanco/rojo)
+      px(18, 25, 12, 5, '#220a0a');
+      px(19, 26, 3, 2, '#1d4ed8');
+      px(22, 26, 4, 2, '#ffffff');
+      px(26, 26, 3, 2, '#dc2626');
+    }
+
+    // Borde interior pixelado
+    pCtx.strokeStyle = '#000';
+    pCtx.lineWidth = 2;
+    pCtx.strokeRect(1, 1, 46, 46);
+
+    portraitCache[key] = pCanvas;
+    return pCanvas;
+  }
+
+  // ========================================================
+  // 3. ESTADO DEL JUEGO Y PROGRESIÓN DE PELEAS
+  // ========================================================
+  const STATE = {
+    TITLE: 'TITLE',
+    INTRO_STORY: 'INTRO_STORY',
+    VS_SCREEN: 'VS_SCREEN',
+    FIGHT: 'FIGHT',
+    POST_ROBO: 'POST_ROBO',
+    ARRIVAL: 'ARRIVAL',
+    COACH: 'COACH',
+    WEEK_RESULT: 'WEEK_RESULT',
+    TRAIN_TRAVEL: 'TRAIN_TRAVEL',
+    BRIEF: 'BRIEF',
+    GYM: 'GYM',
+    VICTORY_FINAL: 'VICTORY_FINAL'
+  };
+
+  let gameState = STATE.TITLE;
+  let currentFightIndex = 0;
+  let vsTimer = 0;
+  let storyStep = 0;
+  let sceneFrame = 0;
+  let week = 1;
+  let weekResult = null;
+  let recoveryMessage='';
+  let fightShop=false;
+  let specialFx=0, specialOrigin=0, specialDirection=1;
+  function recover(kind){
+    if(minigame.active || gameState!==STATE.GYM) return;
+    if(kind==='rest'){
+      if(playerStats.trainsLeft<=0)return;
+      playerStats.fatigue=Math.max(0,playerStats.fatigue-25);
+      playerStats.trainsLeft--;travelMode='exit';sceneFrame=0;gameState=STATE.TRAIN_TRAVEL;
+      recoveryMessage='Día de descanso: -25 de fatiga';
+    }else if(kind==='food'){
+      if(playerStats.goodFood){recoveryMessage='Ya mejoraste la comida esta semana';return;}
+      if(playerStats.money<40){recoveryMessage='Necesitás $40 para mejorar la comida';return;}
+      playerStats.money-=40;playerStats.goodFood=true;playerStats.fatigue=Math.max(0,playerStats.fatigue-8);
+      recoveryMessage='Comida: -8 fatiga y entrenar cansa menos';
+    }else{
+      if(playerStats.money<60){recoveryMessage='Necesitás $60 para un masaje';return;}
+      if(playerStats.fatigue===0){recoveryMessage='Ya estás descansado';return;}
+      playerStats.money-=60;playerStats.fatigue=Math.max(0,playerStats.fatigue-30);
+      recoveryMessage='Masaje: -30 de fatiga';
+    }saveProgress();sfxSelect();
+  }
+  function recordResult(won,rival){
+    const prize=won?120+currentFightIndex*40:30;
+    playerStats.money+=prize;playerStats.fatigue=Math.min(70,playerStats.fatigue+15);
+    weekResult={won,rival,prize};sceneFrame=0;gameState=STATE.WEEK_RESULT;
+  }
+  let travelMode='enter';
+  function finishTravel(){
+    if(travelMode==='exit' && playerStats.trainsLeft>0){
+      travelMode='enter';sceneFrame=0;gameState=STATE.TRAIN_TRAVEL;return;
+    }
+    gameState=STATE.GYM;saveProgress();
+  }
+
+  // Estadísticas RPG de Lautaro
+  const playerStats = {
+    fuerza: 1,
+    velocidad: 1,
+    aguante: 1,
+    tecnica: 1,
+    skillPoints: 0,
+    trainsLeft: 3,
+    fatigue: 0, money: 60, goodFood: false
+  };
+
+  // Lista de combates desde Estación Madero hasta el cinturón de UFC
+  const FIGHTS = [
+    {
+      id: 'prologo_kevin',
+      name: 'EL KEVIN',
+      subtitle: 'EMBOSCADA EN ESTACIÓN MADERO',
+      portrait: 'kevin',
+      stage: 'madero',
+      isPrologue: true,
+      hp: 240,
+      atk: 18,
+      speed: 2.3,
+      color: '#1049a8',
+      capColor: '#d62424',
+      quotePlayer: '¡Dejá pasar loco, vengo cansado de cursar y laburar todo el día!',
+      quoteEnemy: '¡Entregá la mochila en Villa Madero gil, acá no pasás!'
+    },
+    ...[
+      ['tito', 'TITO', 'DEBUT AMATEUR', 190, 10, 1.8, '#a65b24'],
+      ['rulo', 'EL RULO', 'CIRCUITO BARRIAL', 265, 13, 2.05, '#7949aa'],
+      ['nico', 'NICO', 'FINAL REGIONAL', 340, 16, 2.35, '#238786']
+    ].map(([id, name, subtitle, hp, atk, speed, color]) => ({
+      id, name, subtitle, hp, atk, speed, color, portrait: id,
+      stage: 'gym_ring', isPrologue: false, capColor: null,
+      quotePlayer: 'Otra semana de trabajo. Vamos al ring.',
+      quoteEnemy: 'Acá se demuestra lo que entrenaste.'
+    })),
+    {
+      id: 'revancha_kevin', name: 'EL KEVIN',
+      subtitle: 'ÚLTIMA PELEA LOCAL - LA REVANCHA', portrait: 'kevin',
+      stage: 'gym_ring', isPrologue: false, hp: 420, atk: 20,
+      speed: 2.6, color: '#1049a8', capColor: '#d62424',
+      quotePlayer: 'Ahora sí, Kevin. Sin emboscadas.',
+      quoteEnemy: 'A ver si el gimnasio te sirvió, gil.'
+    },
+    {
+      id: 'ufc_champ',
+      name: '"EL DEMOLEDOR" HENDERSON',
+      subtitle: 'LAS VEGAS - FINAL POR EL TÍTULO UFC',
+      portrait: 'henderson',
+      stage: 'ufc_octagon',
+      isPrologue: false,
+      hp: 550,
+      atk: 25,
+      speed: 2.6,
+      color: '#b81d2c',
+      capColor: null,
+      quotePlayer: 'De Villa Madero y el Belgrano Sur directo a Las Vegas. ¡Vamos por el cinturón!',
+      quoteEnemy: 'Welcome to the Octagon, kid! You are in my house now!'
+    }
+  ];
+
+  const saveKey='conurbano-fighter-save-v1';
+  let savedRun=null, saveAvailable=true;
+  try{const data=JSON.parse(localStorage.getItem(saveKey));if(data&&data.version===1&&Number.isInteger(data.index)&&data.index>=1&&data.index<FIGHTS.length&&data.stats&&['fuerza','velocidad','aguante','tecnica','fatigue','money','trainsLeft'].every(k=>Number.isFinite(data.stats[k]))&&data.stats.trainsLeft>=0&&data.stats.trainsLeft<=3)savedRun=data;}catch{saveAvailable=false;}
+  function saveProgress(){
+    if(currentFightIndex<1)return;
+    savedRun={version:1,index:currentFightIndex,week,stats:{...playerStats}};
+    try{localStorage.setItem(saveKey,JSON.stringify(savedRun));}catch{saveAvailable=false;}
+  }
+  function clearProgress(){savedRun=null;try{localStorage.removeItem(saveKey);}catch{}}
+  const rivalStyles=['prologue','basic','pressure','defensive','counter','pressure'];
+
+  // ========================================================
+  // 4. ENTIDADES DE COMBATE Y BALANCE DEL PRÓLOGO
+  // ========================================================
+  let player = null;
+  let enemy = null;
+  let braianAmbush = null;
+  let floatingTexts = [];
+  let fightBanner = '';
+  let fightBannerTimer = 0;
+  let prologueHitsLanded = 0;
+  let fightTimer = 99;
+  let lastSecondTick = 0;
+
+  function setupFight(index) {
+    const f = FIGHTS[index];
+    const maxPlayerHp = f.isPrologue ? 115 : Math.round((110 + playerStats.aguante * 18)*(1-playerStats.fatigue/350));
+
+    player = {
+      x: 150,
+      y: 310,
+      vx: 0,
+      dir: 1,
+      hp: maxPlayerHp,
+      maxHp: maxPlayerHp,
+      energy: 0,
+      state: 'idle', // idle, walk, punch, kick, block, hit, ko, special
+      stateTimer: 0,
+      combo: 0,
+      hasBackpack: f.isPrologue
+    };
+
+    enemy = {
+      x: 460,
+      y: 310,
+      vx: 0,
+      dir: -1,
+      hp: f.hp,
+      maxHp: f.hp,
+      state: 'idle',
+      stateTimer: 0,
+      aiCooldown: 35,
+      telegraph: 0,
+      enraged: false,
+      hitsTaken: 0
+    };
+
+    // En el prólogo, El Braian espera escondido para emboscar después de que intentes pelear
+    braianAmbush = {
+      active: false,
+      x: -40,
+      y: 310,
+      done: false
+    };
+
+    specialFx=0;
+    prologueHitsLanded = 0;
+    floatingTexts = [];
+    fightTimer = 99;
+    fightBanner = 'ROUND 1 - ¡A PELEAR!';
+    fightBannerTimer = 90;
+  }
+
+  function addFloatingText(x, y, text, color = '#ffcc00') {
+    floatingTexts.push({ x, y, text, color, life: 45 });
+  }
+
+  // ========================================================
+  // 5. ENTRENAMIENTO INTERACTIVO EN EL GIMNASIO DE DON OSVALDO
+  // ========================================================
+  let minigame = {
+    active: false,
+    cursor: 0,
+    dir: 1,
+    speed: 3.5,
+    hits: 0,
+    attempts: 0,
+    statTarget: 'fuerza'
+  };
+
+  function finishTraining(){
+    const st=minigame.statTarget, threshold=st==='tecnica'?5:st==='aguante'?10:st==='velocidad'?4:2;
+    const gain=minigame.hits>=threshold?2:1;
+    minigame.active=false;playerStats.trainsLeft--;playerStats[st]+=gain;
+    playerStats.fatigue=Math.min(70,playerStats.fatigue+(playerStats.goodFood?7:12));
+    recoveryMessage=`${st.toUpperCase()} +${gain} · Nivel ${playerStats[st]}`;
+    saveProgress();travelMode='exit';sceneFrame=0;gameState=STATE.TRAIN_TRAVEL;
+  }
+
+  function startMinigame(statName) {
+    if (playerStats.trainsLeft <= 0) return;
+    if (playerStats.trainsLeft > 0) {
+      minigame.active = true;
+      minigame.cursor = 10;
+      minigame.dir = 1;
+      minigame.speed = 3.6;
+      minigame.hits = 0;
+      minigame.attempts = 0;
+      minigame.statTarget = statName;minigame.frames=0;minigame.jumped=false;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
+      sfxSelect();
+    }
+  }
+
+  // ========================================================
+  // 6. CONTROLES (TECLADO + BOTONES EN PANTALLA + CLIC EN CANVAS)
+  // ========================================================
+  const keys = {};
+
+  function handleActionPress(code) {
+    initAudio();
+
+    if (gameState === STATE.TITLE) {
+      if(savedRun && code!=='KeyN'){
+        Object.assign(playerStats,savedRun.stats);currentFightIndex=savedRun.index;week=savedRun.week;
+        gameState=playerStats.trainsLeft===3?STATE.BRIEF:STATE.GYM;startBGM('gym');return;
+      }
+      clearProgress();
+      gameState = STATE.INTRO_STORY;
+      storyStep = 0;
+      startBGM('madero');
+      sfxSelect();
+      return;
+    }
+
+    if (gameState === STATE.INTRO_STORY) {
+      storyStep++;
+      sfxSelect();
+      if (storyStep >= 2) {
+        currentFightIndex = 0;
+        gameState = STATE.VS_SCREEN;
+        vsTimer = 210;
+        startBGM('vs');
+      }
+      return;
+    }
+
+    if (gameState === STATE.VS_SCREEN) {
+      if (vsTimer < 170) {
+        vsTimer = 0;
+      }
+      return;
+    }
+
+    if (gameState === STATE.POST_ROBO) {
+      storyStep++;
+      if (storyStep >= 2) { gameState = STATE.ARRIVAL; sceneFrame = 0; }
+      sfxSelect(); return;
+    }
+    if (gameState === STATE.ARRIVAL) {
+      if (sceneFrame >= 240) { gameState = STATE.COACH; startBGM('gym'); }
+      return;
+    }
+    if(gameState===STATE.BRIEF){gameState=STATE.GYM;sfxSelect();return;}
+    if(gameState === STATE.TRAIN_TRAVEL){if(sceneFrame>=45)finishTravel();return;}
+    if(gameState === STATE.WEEK_RESULT) {
+      if(sceneFrame < 120) return;
+      if(weekResult.won) currentFightIndex++;
+      week++;playerStats.trainsLeft=3;playerStats.skillPoints=0;
+      playerStats.fatigue=Math.max(0,playerStats.fatigue-15);playerStats.goodFood=false;recoveryMessage='';
+      gameState=STATE.BRIEF;saveProgress();startBGM('gym');sfxSelect();return;
+    }
+    if (gameState === STATE.COACH) {
+      playerStats.skillPoints = 0; playerStats.trainsLeft = 3;
+      currentFightIndex = 1; week = 1; gameState = STATE.BRIEF;
+      sfxSelect(); return;
+    }
+    if (gameState === STATE.GYM && minigame.active) {
+      if(!['KeyZ','KeyX','Space'].includes(code))return;
+      if(minigame.statTarget==='tecnica'){
+        const expected=minigame.sequence[minigame.attempts];
+        if(code===expected || code==='Space'&&expected==='KeyZ'){minigame.hits++;sfxParry();}else sfxWeakHit();
+        minigame.attempts++;if(minigame.attempts>=6)finishTraining();
+      }else if(minigame.statTarget==='aguante'){
+        minigame.hits++;sfxHit();if(minigame.hits>=12)finishTraining();
+      }else if(minigame.statTarget==='velocidad'){
+        if(!minigame.jumped){minigame.jumped=true;if(minigame.cursor>=38&&minigame.cursor<=62){minigame.hits++;sfxParry();}else sfxWeakHit();}
+      }else{
+        minigame.attempts++;
+        if(minigame.cursor>=38&&minigame.cursor<=62){minigame.hits++;sfxParry();}else sfxWeakHit();
+        minigame.speed+=.7;if(minigame.attempts>=3)finishTraining();
+      }
+      return;
+    }
+
+    if (gameState === STATE.VICTORY_FINAL) {
+      // Reiniciar juego
+      playerStats.fuerza = 1;
+      playerStats.velocidad = 1;
+      playerStats.aguante = 1;
+      playerStats.tecnica = 1;
+      playerStats.fatigue=0;playerStats.money=60;playerStats.goodFood=false;playerStats.trainsLeft=3;week=1;recoveryMessage='';
+      gameState = STATE.TITLE;
+      sfxSelect();
+      return;
+    }
+
+    // Acciones en combate
+    if (gameState === STATE.FIGHT && player && (player.state === 'idle' || player.state === 'walk')) {
+      if (code === 'KeyZ') {
+        player.state = 'punch';
+        player.stateTimer = Math.max(20, 26 - Math.min(6,playerStats.velocidad));
+        executePlayerAttack('punch');
+      } else if (code === 'KeyX') {
+        player.state = 'kick';
+        player.stateTimer = Math.max(28, 34 - Math.min(6,playerStats.velocidad));
+        executePlayerAttack('kick');
+      } else if (code === 'KeyV' && player.energy >= 100 && !FIGHTS[currentFightIndex].isPrologue) {
+        player.energy = 0;
+        player.state = 'special';
+        player.stateTimer = 38;
+        specialFx=38;specialOrigin=player.x;specialDirection=player.dir;
+        executePlayerAttack('special');
+      }
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (['KeyZ', 'KeyX', 'KeyV', 'Space', 'Enter', 'KeyN'].includes(e.code)) {
+      handleActionPress(e.code);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    keys[e.code] = false;
+  });
+
+  // Botones táctiles inferiores
+  document.querySelectorAll('.ctrl-btn').forEach(btn => {
+    const k = btn.dataset.key;
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      keys[k] = true;
+      handleActionPress(k);
+    });
+    btn.addEventListener('pointerup', (e) => {
+      e.preventDefault();
+      keys[k] = false;
+    });
+    btn.addEventListener('pointerleave', () => { keys[k] = false; });
+  });
+
+  // Clics directos en el Canvas (para el Gimnasio y pantallas de historia)
+  canvas.addEventListener('pointerdown', (e) => {
+    initAudio();
+    const rect = canvas.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
+
+    if(gameState===STATE.TITLE&&savedRun&&my>=357){handleActionPress('KeyN');return;}
+    if (gameState === STATE.GYM) {
+      if (minigame.active) {
+        handleActionPress('KeyZ');
+        return;
+      }
+      if(playerStats.trainsLeft===0){
+        if(my>=185&&my<=245){
+          if(mx>=40&&mx<=300){
+            if(fightShop)recover('food');
+            else {gameState=STATE.VS_SCREEN;vsTimer=210;fightShop=false;startBGM('vs');}
+          }else if(mx>=340&&mx<=600){if(fightShop)recover('massage');else fightShop=true;}
+        }
+        if(fightShop&&mx>=200&&mx<=440&&my>=320&&my<=365)fightShop=false;
+        return;
+      }
+      // Botones de entrenamiento de estadísticas
+      const statsList = ['fuerza', 'velocidad', 'aguante', 'tecnica'];
+      statsList.forEach((st, idx) => {
+        const bx = 40 + (idx % 2) * 280;
+        const by = 130 + Math.floor(idx / 2) * 68;
+        if (mx >= bx && mx <= bx + 260 && my >= by && my <= by + 54) {
+          startMinigame(st);
+        }
+      });
+
+      if(my>=270 && my<=306){
+        if(mx>=30&&mx<=210)recover('rest');
+        else if(mx>=230&&mx<=410)recover('food');
+        else if(mx>=430&&mx<=610)recover('massage');
+        return;
+      }
+
+      // Botón IR A PELEAR
+      if (playerStats.trainsLeft === 0 && mx >= 200 && mx <= 440 && my >= 335 && my <= 385) {
+        sfxSelect();
+        gameState = STATE.VS_SCREEN;
+        vsTimer = 210;
+        startBGM('vs');
+      }
+      return;
+    }
+
+    handleActionPress('Space');
+  });
+
+  // ========================================================
+  // 7. LÓGICA DE ATAQUES Y BALANCE DEL PRIMER RIVAL (KEVIN)
+  // ========================================================
+  function executePlayerAttack(type) {
+    const f = FIGHTS[currentFightIndex];
+    const dist = Math.abs(player.x - enemy.x);
+    const reach = type === 'kick' ? 88 : (type === 'special' ? 115 : 70);
+
+    if (dist <= reach && enemy.state !== 'ko') {
+      // BALANCE DEL PRÓLOGO PEDIDO:
+      // Podés pegarle 2, 3, 4 o 5 veces seguidas y entran los golpes, pero le sacan muy poquita vida (2 a 4 HP).
+      // Después de que le conectás unos golpes intentando defenderte, Kevin se enoja y empieza a contratacar fuerte.
+      if (f.isPrologue) {
+        const chipDmg = type === 'kick' ? 4 : 3;
+        enemy.hp = Math.max(180, enemy.hp - chipDmg);
+        enemy.state = 'hit';
+        enemy.stateTimer = 10; // Se sacude para que sientas que le pegaste
+        enemy.vx = 2.2;
+        prologueHitsLanded++;
+        sfxWeakHit();
+        addFloatingText(enemy.x, enemy.y - 85, `¡POCA FUERZA! -${chipDmg}`, '#ff9966');
+
+        if (prologueHitsLanded === 3) {
+          enemy.enraged = true;
+          fightBanner = 'KEVIN: "¿ME QUERÉS PEGAR GIL? ¡AHORA VAS A VER!"';
+          fightBannerTimer = 110;
+        }
+        return;
+      }
+
+      // Combates normales del Torneo y UFC
+      let baseDmg = type === 'punch' ? 8 : (type === 'kick' ? 13 : 32);
+      let totalDmg = Math.round(baseDmg + playerStats.fuerza * 1.8 + (type === 'special' ? playerStats.tecnica * 3 : 0));
+
+      // Una secuencia repetida de golpes provoca guardia y contraataque.
+      const style=rivalStyles[currentFightIndex];
+      enemy.hitsTaken++;
+      if(type !== 'special' && ((enemy.state==='block' && type==='punch') || enemy.hitsTaken % (style==='defensive'?3:style==='counter'?4:5) === 0)) {
+        totalDmg = Math.max(2, Math.round(totalDmg*.25));
+        enemy.hp = Math.max(0,enemy.hp-totalDmg);
+        enemy.state='block';enemy.stateTimer=8;enemy.telegraph=style==='counter'?8:14;
+        enemy.aiCooldown=12;
+        player.energy=Math.min(100,player.energy+18);
+        addFloatingText(enemy.x,enemy.y-90,'¡GUARDIA!', '#66dd88');sfxBlock();return;
+      }
+
+      // Si el enemigo tenía cartel de alerta (!), metés ANTICIPO crítico
+      if (enemy.telegraph > 0) {
+        totalDmg = Math.round(totalDmg * 1.45);
+        enemy.telegraph = 0;
+        addFloatingText(enemy.x, enemy.y - 95, `¡ANTICIPO CRÍTICO! -${totalDmg}`, '#00ffcc');
+        sfxParry();
+      } else {
+        addFloatingText(enemy.x, enemy.y - 85, `-${totalDmg}`, '#ffcc00');
+        sfxHit(type !== 'punch');
+      }
+
+      enemy.hp = Math.max(0, enemy.hp - totalDmg);
+      enemy.state = 'hit';
+      enemy.stateTimer = 7;
+      enemy.vx = player.dir * (type === 'kick' ? 6 : 3.5);
+      if(type !== 'special') player.energy = Math.min(100, player.energy + 22);
+      if(player.energy === 100 && type !== 'special'){fightBanner='¡ESPECIAL LISTA! APRETÁ V';fightBannerTimer=60;}
+      player.combo++;
+    }
+  }
+
+  // ========================================================
+  // 8. LOOP DE ACTUALIZACIÓN (UPDATE)
+  // ========================================================
+  function update() {
+    if(gameState===STATE.TRAIN_TRAVEL){sceneFrame++;if(sceneFrame>=110)finishTravel();return;}
+    if(gameState === STATE.WEEK_RESULT){sceneFrame++;return;}
+    if (gameState === STATE.ARRIVAL) { sceneFrame++; if (sceneFrame >= 330) { gameState = STATE.COACH; startBGM('gym'); } return; }
+    if (gameState === STATE.VS_SCREEN) {
+      vsTimer--;
+      if (vsTimer <= 0) {
+        setupFight(currentFightIndex);
+        gameState = STATE.FIGHT;
+        startBGM(FIGHTS[currentFightIndex].stage === 'ufc_octagon' ? 'ufc' : 'madero');
+      }
+      return;
+    }
+
+    if (gameState === STATE.GYM && minigame.active) {
+      minigame.frames++;
+      if(minigame.statTarget==='aguante'){if(minigame.frames>=300)finishTraining();return;}
+      if(minigame.statTarget==='tecnica')return;
+      minigame.cursor+=minigame.dir*minigame.speed;
+      if(minigame.statTarget==='velocidad'){
+        if(minigame.cursor>=100){minigame.cursor=0;minigame.jumped=false;minigame.attempts++;if(minigame.attempts>=5)finishTraining();}
+      }else if(minigame.cursor>=100){minigame.cursor=100;minigame.dir=-1;}else if(minigame.cursor<=0){minigame.cursor=0;minigame.dir=1;}
+      return;
+    }
+
+    if (gameState !== STATE.FIGHT) return;
+
+    const f = FIGHTS[currentFightIndex];
+
+    if(specialFx>0)specialFx--;
+    // Reloj de combate
+    lastSecondTick++;
+    if (lastSecondTick >= 60 && fightTimer > 0) {
+      fightTimer--;
+      lastSecondTick = 0;
+    }
+
+    if (fightBannerTimer > 0) fightBannerTimer--;
+
+    // Textos flotantes
+    floatingTexts.forEach(t => {
+      t.y -= 0.8;
+      t.life--;
+    });
+    floatingTexts = floatingTexts.filter(t => t.life > 0);
+
+    // Actualizar Jugador
+    if (player.stateTimer > 0) {
+      player.stateTimer--;
+      if (player.stateTimer === 0 && player.state !== 'ko') {
+        player.state = 'idle';
+      }
+    }
+
+    const moveSpeed = (2.6 + playerStats.velocidad * 0.45)*(1-(f.isPrologue?0:playerStats.fatigue/470));
+    if (player.state === 'idle' || player.state === 'walk' || player.state === 'block') {
+      if (keys['KeyC']) {
+        player.state = 'block';
+        player.vx = 0;
+      } else if (keys['ArrowLeft']) {
+        player.vx = -moveSpeed;
+        player.state = 'walk';
+      } else if (keys['ArrowRight']) {
+        player.vx = moveSpeed;
+        player.state = 'walk';
+      } else {
+        player.vx = 0;
+        player.state = 'idle';
+      }
+    }
+
+    player.x += player.vx;
+    player.vx *= 0.8;
+    player.x = Math.max(45, Math.min(595, player.x));
+    player.dir = player.x <= enemy.x ? 1 : -1;
+
+    // Actualizar Rival (IA)
+    if (enemy.stateTimer > 0) {
+      enemy.stateTimer--;
+      if (enemy.stateTimer === 0 && enemy.state !== 'ko') {
+        enemy.state = 'idle';
+      }
+    }
+
+    if (enemy.telegraph > 0) {
+      enemy.telegraph--;
+      if (enemy.telegraph === 0 && enemy.state !== 'hit' && enemy.state !== 'ko') {
+        // Lanza el golpe anunciado
+        enemy.state = 'attack';
+        enemy.stateTimer = 18;
+        const dist = Math.abs(enemy.x - player.x);
+        if (dist < 82) {
+          // En el prólogo: al principio te deja pegarle un par de veces, y cuando se enoja te saca de a 28-35 HP (te gana en ~3 o 4 golpes, no de una)
+          let dmg = f.isPrologue ? (enemy.enraged ? 32 : 22) : f.atk;
+
+          if (player.state === 'block') {
+            const blockedDmg = f.isPrologue ? 12 : Math.max(2, Math.round(dmg * 0.22));
+            player.hp = Math.max(0, player.hp - blockedDmg);
+            player.energy = Math.min(100, player.energy + 15);
+            sfxBlock();
+            addFloatingText(player.x, player.y - 80, `GUARDIA -${blockedDmg}`, '#66dd88');
+          } else {
+            player.hp = Math.max(0, player.hp - dmg);
+            player.state = 'hit';
+            player.stateTimer = 16;
+            player.combo = 0;
+            if(!f.isPrologue) player.energy=Math.min(100,player.energy+12);
+            sfxHit(true);
+            addFloatingText(player.x, player.y - 85, `-${dmg}`, '#ff4444');
+          }
+        }
+      }
+    }
+
+    // Movimiento IA
+    if (enemy.state === 'idle' && enemy.telegraph === 0 && player.hp > 0 && enemy.hp > 0) {
+      const dist = enemy.x - player.x;
+      enemy.dir = dist >= 0 ? -1 : 1;
+
+      // En el prólogo, los primeros segundos Kevin se confía para que puedas meterle tus primeros 2 o 3 golpes
+      if (f.isPrologue && prologueHitsLanded >= 2) {
+        enemy.enraged = true;
+      }
+
+      if (Math.abs(dist) > 68) {
+        const spd = f.isPrologue && !enemy.enraged ? 1.5 : f.speed;
+        enemy.x -= Math.sign(dist) * spd;
+      } else {
+        const style=rivalStyles[currentFightIndex];
+        if(style==='defensive' && enemy.aiCooldown>18){enemy.state='block';enemy.stateTimer=10;enemy.aiCooldown-=10;}
+        if(style==='counter' && player.state==='idle' && enemy.aiCooldown>12){enemy.aiCooldown-=.3;}else enemy.aiCooldown--;
+        const threshold = (f.isPrologue && !enemy.enraged) ? 42 : 18;
+        if (enemy.aiCooldown <= 0) {
+          enemy.telegraph = 14; // Señal (!) antes de pegar
+          enemy.aiCooldown = Math.max(22, 46 - currentFightIndex * 5)+(rivalStyles[currentFightIndex]==='pressure'?-5:rivalStyles[currentFightIndex]==='defensive'?12:0);
+        }
+      }
+    }
+
+    // Emboscada de El Braian en el prólogo si ya le pegaste varias veces y te queda poca vida
+    if (f.isPrologue && !braianAmbush.active && !braianAmbush.done && prologueHitsLanded >= 3 && player.hp <= 48) {
+      braianAmbush.active = true;
+      braianAmbush.x = Math.max(20, player.x - 140);
+      fightBanner = '¡CUIDADO! ¡EL BRAIAN APARECE DE ATRÁS!';
+      fightBannerTimer = 100;
+    }
+
+    if (braianAmbush && braianAmbush.active && !braianAmbush.done) {
+      braianAmbush.x += 5.2;
+      if (braianAmbush.x >= player.x - 25) {
+        braianAmbush.done = true;
+        player.hp = 0;
+        sfxKO();
+        addFloatingText(player.x, player.y - 95, '¡GOLPE TRAICIONERO DE ATRÁS!', '#ff2222');
+      }
+    }
+
+    // Comprobar Fin del Combate
+    if (player.hp <= 0 && player.state !== 'ko') {
+      player.state = 'ko';
+      sfxKO();
+      setTimeout(() => {
+        if (f.isPrologue) {
+          gameState = STATE.POST_ROBO; storyStep = 0;
+        } else {
+          // Si perdés en el torneo, volvés al gimnasio con 1 entrenamiento extra de motivación
+          recordResult(false,f.name);
+        }
+      }, 1700);
+    } else if (enemy.hp <= 0 && enemy.state !== 'ko') {
+      enemy.state = 'ko';
+      sfxKO();
+      fightBanner = '¡K.O. - GANADOR LAUTARO!';
+      fightBannerTimer = 120;
+      setTimeout(() => {
+        if (f.isPrologue) {
+          currentFightIndex = 1; gameState = STATE.POST_ROBO; storyStep = 0;
+        } else if (currentFightIndex >= FIGHTS.length - 1) {
+          clearProgress();gameState = STATE.VICTORY_FINAL;
+        } else {
+          currentFightIndex++;
+          playerStats.skillPoints = 0;
+          recordResult(false,f.name);
+        }
+      }, 1900);
+    }
+  }
+
+  // ========================================================
+  // 9. RENDERIZADO 16-BIT (ESCENARIOS, PANTALLA VS Y SPRITES)
+  // ========================================================
+  function drawStageBackground(stage) {
+    if(stage === 'bedroom') {
+      ctx.fillStyle='#343d57';ctx.fillRect(0,0,640,400);
+      ctx.fillStyle='#242b40';ctx.fillRect(0,155,640,115);
+      ctx.fillStyle='#624b3a';ctx.fillRect(0,270,640,130);
+      ctx.strokeStyle='#423327';for(let x=0;x<640;x+=64){ctx.beginPath();ctx.moveTo(x,270);ctx.lineTo(x-40,400);ctx.stroke();}
+      ctx.fillStyle='#101c35';ctx.fillRect(62,35,115,108);ctx.strokeStyle='#8f929c';ctx.lineWidth=5;ctx.strokeRect(62,35,115,108);
+      ctx.fillStyle='#d9d9af';ctx.fillRect(130,53,14,14);ctx.fillStyle='#666d89';ctx.fillRect(115,35,5,108);
+      ctx.fillStyle='#54453e';ctx.fillRect(220,145,210,110);
+      ctx.fillStyle='#9b9caa';ctx.fillRect(216,204,220,42);ctx.fillStyle='#354f72';ctx.fillRect(215,231,225,30);
+      ctx.fillStyle='#d6d0bb';ctx.fillRect(235,206,60,19);
+      ctx.fillStyle='#685343';ctx.fillRect(470,196,75,67);
+      ctx.fillStyle='#e4bf75';ctx.fillRect(500,165,6,31);ctx.fillStyle='#bb8f4f';ctx.fillRect(484,148,39,20);
+      drawFighterSprite({x:330,y:286,dir:1,state:'seated'},true,'#4a525d',null);
+      return;
+    }
+    if(stage === 'gym_outside') {
+      const night=gameState===STATE.TRAIN_TRAVEL&&travelMode==='exit';
+      const sky=ctx.createLinearGradient(0,0,0,210);sky.addColorStop(0,night?'#132038':'#75a8b8');sky.addColorStop(1,night?'#615573':'#eac8a0');ctx.fillStyle=sky;ctx.fillRect(0,0,640,400);
+      function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+      // Medianeras, terrazas y tanques sobre una cuadra del barrio.
+      rect(0,86,104,230,'#9a8775');rect(104,70,120,246,'#b19d7f');rect(225,114,70,202,'#827c70');
+      rect(7,78,98,10,'#57514a');rect(102,63,124,10,'#7f6c57');
+      rect(134,33,43,29,'#333f42');rect(137,28,37,6,'#263238');rect(139,59,3,9,'#343536');rect(168,59,3,9,'#343536');
+      rect(39,49,34,29,'#b7a48c');rect(44,41,5,8,'#7d6d5a');
+      rect(22,134,63,78,'#4d6564');rect(26,138,55,70,'#9aac9a');rect(51,138,4,70,'#404f50');rect(26,169,55,4,'#404f50');
+      rect(119,121,84,139,'#4b4c49');for(let y=126;y<260;y+=7)rect(120,y,82,2,'#77766c');
+      rect(115,265,92,12,'#76634d');rect(230,174,47,83,'#353d3c');rect(236,181,34,63,'#587573');
+      // Fachada de boxeo: ladrillo expuesto, revoque gastado y chapa.
+      rect(288,94,323,226,'#a5886a');rect(287,86,328,12,'#5b4a3e');rect(298,155,288,156,'#b0a28a');
+      for(let row=0;row<6;row++)for(let col=0;col<14;col++){const x=290+col*23+(row%2)*11;if(x<608)rect(x,100+row*8,21,6,(col+row)%3?'#8c5843':'#a36d50');}
+      rect(295,144,314,9,'#514a41');rect(312,163,111,22,'#1d3c3b');
+      ctx.fillStyle='#e4dbb9';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText('BOXEO · MMA',367,179);
+      rect(314,191,106,103,'#454f4a');for(let y=198;y<293;y+=6)rect(318,y,98,2,'#6f7971');
+      rect(442,167,99,151,'#4b4439');rect(451,177,81,141,night?'#a7864c':'#242d2b');
+      rect(455,178,71,16,night?'#d7b46d':'#756851');rect(438,313,108,7,'#766757');
+      rect(548,180,39,95,'#62594d');rect(553,185,29,82,'#b6aa87');rect(567,185,3,82,'#504b43');
+      // Cartel pintado a mano, toldo y huellas de desgaste.
+      rect(307,108,286,35,'#d1bc87');ctx.fillStyle='#403b2c';ctx.font='bold 15px monospace';ctx.fillText('DON OSVALDO',450,129);
+      ctx.font='10px monospace';ctx.fillText('CLUB DE BOXEO · VILLA MADERO',450,141);
+      for(const [x,y,w,h] of [[299,255,12,25],[586,291,18,19],[427,177,6,41],[310,301,49,6]])rect(x,y,w,h,'#817663');
+      ctx.strokeStyle='#6c6356';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(581,155);ctx.lineTo(575,168);ctx.lineTo(582,180);ctx.stroke();
+      // Vereda, cordón, asfalto, poste y cables.
+      rect(0,320,640,36,'#a39b8b');for(let x=0;x<640;x+=39){rect(x,321,1,34,'#776f62');}rect(0,338,640,1,'#7b7366');
+      rect(0,355,640,7,'#6c675e');rect(0,362,640,38,'#424950');rect(15,385,77,3,'#7b7b72');rect(558,373,35,3,'#77776c');
+      rect(244,32,8,325,'#615644');rect(237,31,23,8,'#4e493e');rect(246,75,24,4,'#4f4c40');rect(268,76,16,5,night?'#f5d191':'#aaa38e');
+      ctx.strokeStyle=night?'#151d2a':'#3a4648';ctx.lineWidth=2;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(0,18+i*10);ctx.quadraticCurveTo(240,75+i*7,640,26+i*12);ctx.stroke();}
+      // Árbol a un costado, maceta y bicicleta junto a la persiana.
+      rect(17,230,8,99,'#655540');for(const [x,y,r] of [[18,221,26],[39,233,19],[0,242,25]]){ctx.fillStyle=night?'#203e36':'#4f7250';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+      rect(570,307,22,14,'#93694e');rect(580,285,4,26,'#3c6042');rect(570,294,26,6,'#4c7653');
+      ctx.strokeStyle='#333d40';ctx.lineWidth=2;for(let x of [147,190]){ctx.beginPath();ctx.arc(x,308,12,0,Math.PI*2);ctx.stroke();}ctx.beginPath();ctx.moveTo(147,308);ctx.lineTo(166,286);ctx.lineTo(178,308);ctx.lineTo(147,308);ctx.lineTo(181,292);ctx.lineTo(190,308);ctx.moveTo(181,292);ctx.lineTo(181,282);ctx.lineTo(188,282);ctx.stroke();
+      ctx.fillStyle='#cab98f';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText('MADERO',43,292);
+      if(night){ctx.fillStyle='rgba(7,14,31,.32)';ctx.fillRect(0,0,640,345);ctx.fillStyle='#f0deb1';ctx.fillRect(80,20,12,12);}
+      return;
+    }
+    if(stage === 'gym_interior') {
+      ctx.fillStyle='#69604f';ctx.fillRect(0,0,640,400);
+      ctx.fillStyle='#3e413c';ctx.fillRect(0,140,640,160);
+      ctx.fillStyle='#453d36';ctx.fillRect(0,300,640,100);
+      ctx.fillStyle='#c6b57d';ctx.fillRect(140,25,360,43);
+      ctx.fillStyle='#25251f';ctx.textAlign='center';ctx.font='18px monospace';ctx.fillText('BOXEO MADERO · DON OSVALDO',320,52);
+      ctx.fillStyle='#222';ctx.fillRect(80,68,4,55);ctx.fillStyle='#9c3430';ctx.fillRect(60,123,45,110);
+      ctx.fillStyle='#141619';ctx.fillRect(440,225,145,9);ctx.fillRect(465,207,13,45);ctx.fillRect(540,207,13,45);
+      ctx.strokeStyle='#aba28b';ctx.lineWidth=3;ctx.strokeRect(330,90,200,100);
+      ctx.fillStyle='#7a5d3e';ctx.fillRect(200,258,140,20);
+      return;
+    }
+
+    if (stage === 'madero') {
+      // Cielo nocturno Villa Madero
+      ctx.fillStyle = '#090d1a';
+      ctx.fillRect(0, 0, 640, 400);
+
+      // Techo del andén y columnas
+      ctx.fillStyle = '#182238';
+      ctx.fillRect(0, 40, 640, 35);
+      for (let x = 70; x < 640; x += 180) {
+        ctx.fillStyle = '#141b2d';
+        ctx.fillRect(x, 75, 18, 175);
+        // Faroles amarillos
+        ctx.fillStyle = '#ffcc44';
+        ctx.fillRect(x - 12, 72, 42, 8);
+      }
+
+      // Cartel clásico de estación "VILLA MADERO"
+      ctx.fillStyle = '#102a5c';
+      ctx.fillRect(215, 92, 210, 32);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(215, 92, 210, 32);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillText('VILLA MADERO', 320, 113);
+
+      // Tren Belgrano Sur de fondo
+      ctx.fillStyle = '#283d66';
+      ctx.fillRect(0, 155, 640, 88);
+      ctx.fillStyle = '#e69900';
+      ctx.fillRect(0, 212, 640, 12);
+      for (let wx = 25; wx < 620; wx += 65) {
+        ctx.fillStyle = '#ffdd77';
+        ctx.fillRect(wx, 170, 42, 32);
+      }
+
+      // Andén de baldosas
+      ctx.fillStyle = '#252836';
+      ctx.fillRect(0, 250, 640, 150);
+      ctx.fillStyle = '#d4a017'; // Línea amarilla de seguridad del andén
+      ctx.fillRect(0, 255, 640, 6);
+    } 
+    else if (stage === 'gym_ring') {
+      // Gimnasio Club Social Madero
+      ctx.fillStyle = '#381616';
+      ctx.fillRect(0, 0, 640, 400);
+      // Ladrillos
+      ctx.fillStyle = '#4d1f1f';
+      for (let y = 50; y < 250; y += 20) {
+        for (let x = (y % 40 === 0 ? 0 : 20); x < 640; x += 45) {
+          ctx.fillRect(x, y, 38, 14);
+        }
+      }
+      // Cartel Club Social
+      ctx.fillStyle = '#111';
+      ctx.fillRect(170, 80, 300, 34);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeRect(170, 80, 300, 34);
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = '11px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillText('CLUB SOCIAL MADERO', 320, 102);
+
+      // Cuerdas del Ring
+      ctx.fillStyle = '#d62424';
+      ctx.fillRect(0, 195, 640, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 222, 640, 6);
+      ctx.fillStyle = '#1d4ed8';
+      ctx.fillRect(0, 248, 640, 6);
+
+      // Lona
+      ctx.fillStyle = '#22304a';
+      ctx.fillRect(0, 260, 640, 140);
+    } 
+    else {
+      // Octágono UFC en Las Vegas
+      ctx.fillStyle = '#080814';
+      ctx.fillRect(0, 0, 640, 400);
+      // Reflectores estadio
+      ctx.fillStyle = '#ffdd55';
+      for (let x = 60; x < 600; x += 120) {
+        ctx.fillRect(x, 55, 28, 10);
+      }
+      // Reja del Octágono
+      ctx.strokeStyle = '#444c5c';
+      ctx.lineWidth = 2;
+      for (let x = 0; x < 640; x += 24) {
+        ctx.beginPath();
+        ctx.moveTo(x, 140);
+        ctx.lineTo(x + 24, 260);
+        ctx.moveTo(x + 24, 140);
+        ctx.lineTo(x, 260);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#111';
+      ctx.fillRect(0, 132, 640, 12);
+      ctx.fillStyle = '#d4af37';
+      ctx.font = '11px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      ctx.fillText('UFC WORLD CHAMPIONSHIP - LAS VEGAS', 320, 120);
+
+      // Lona del octágono
+      ctx.fillStyle = '#1e2430';
+      ctx.fillRect(0, 260, 640, 140);
+    }
+  }
+
+  function drawFighterSprite(f, isPlayer, topColor, capColor) {
+    ctx.save();
+    const moving = f.state === 'walk';
+    const phase = Date.now()/120;
+    const bob = moving ? Math.sin(phase)*2 : Math.sin(phase/3);
+    ctx.translate(Math.round(f.x), Math.round(f.y));
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,3,35,7,0,0,Math.PI*2);ctx.fill();
+    ctx.scale(f.dir || 1,1);
+    if(f.state==='ko'){ctx.rotate(-Math.PI/2);ctx.translate(0,-12);}
+    ctx.translate(0,bob);
+    const skin=f.coach?'#d3a27d':isPlayer?'#d7a078':'#bb865f', light=f.coach?'#e8ba92':isPlayer?'#f2bd91':'#dda778';
+    const pants=isPlayer?'#263c69':'#252a3a',glove=f.coach||f.state==='seated'?skin:isPlayer?'#cb313b':'#dba235';
+    function poly(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();ctx.strokeStyle='#171a24';ctx.lineWidth=2;ctx.stroke();}
+    function limb(x,y,ex,ey,width,color){const dx=ex-x,dy=ey-y,l=Math.hypot(dx,dy)||1,nx=-dy/l*width/2,ny=dx/l*width/2;poly([[x+nx,y+ny],[ex+nx,ey+ny],[ex-nx,ey-ny],[x-nx,y-ny]],color);}
+    function hand(x,y){poly([[x-7,y-8],[x+6,y-9],[x+10,y-3],[x+8,y+6],[x-6,y+7],[x-9,y]],glove);ctx.fillStyle='#f4b8a2';ctx.fillRect(x-5,y-6,9,2);}
+    const seated=f.state==='seated';
+    const kick=f.state==='kick',punch=['punch','attack','special'].includes(f.state),block=f.state==='block';
+    // Rear leg and shoes.
+    const stride=moving?Math.sin(phase)*9:0;
+    if(seated){
+      limb(-9,-43,-29,-39,15,pants);limb(-29,-39,-28,-4,12,pants);
+      limb(8,-43,30,-34,16,pants);limb(30,-34,31,-4,12,pants);
+      poly([[-36,-9],[-22,-9],[-18,0],[-38,0]],'#151924');
+      poly([[25,-9],[39,-9],[44,0],[23,0]],'#151924');
+    } else {
+    limb(-9,-43,-20-stride,-22,15,pants);limb(-20-stride,-22,-25-stride,-4,12,pants);
+    poly([[-33-stride,-9],[-19-stride,-9],[-13-stride,0],[-35-stride,0]],'#151924');
+    if(kick){limb(8,-44,31,-56,16,pants);limb(31,-56,62,-62,12,pants);poly([[56,-69],[71,-68],[76,-59],[58,-55]],'#151924');}
+    else{limb(8,-43,20+stride,-23,16,pants);limb(20+stride,-23,18+stride,-5,12,pants);poly([[12+stride,-10],[25+stride,-10],[32+stride,-1],[10+stride,-1]],'#151924');}
+    }
+    ctx.fillStyle='#536b94';ctx.fillRect(-13,-40,4,14);
+    // Rear guarded arm, torso and shirt folds.
+    if(seated){limb(-15,-88,-23,-65,14,skin);limb(-23,-65,-27,-42,12,skin);hand(-27,-40);}else{limb(-15,-88,-26,-66,14,skin);limb(-26,-66,-7,-77,12,skin);hand(-6,-79);}
+    poly([[-13,-101],[9,-99],[24,-88],[19,-66],[12,-44],[-15,-44],[-22,-67],[-25,-88]],topColor);
+    poly([[-13,-97],[-5,-85],[4,-85],[10,-97],[4,-102],[-7,-103]],skin);
+    ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(-15,-86,5,26);
+    ctx.fillStyle=light;ctx.fillRect(18,-83,6,8);ctx.fillStyle='#88513c';ctx.fillRect(22,-75,3,7);ctx.fillRect(-8,-52,20,3);
+    ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(10,-82,5,26);ctx.fillRect(-5,-67,14,3);
+    if(f.hasBackpack){poly([[-23,-90],[-33,-85],[-31,-53],[-20,-50]],'#86623a');}
+    // Profile with jaw, nose, ear and hair.
+    ctx.save();if(seated){ctx.translate(0,-99);ctx.rotate(.42);ctx.translate(0,99);}
+    poly([[-9,-126],[7,-127],[15,-118],[13,-111],[19,-107],[13,-104],[11,-96],[0,-93],[-10,-101],[-13,-117]],skin);
+    ctx.fillStyle=light;ctx.fillRect(0,-118,10,11);ctx.fillRect(-4,-105,9,5);
+    poly([[-13,-119],[-14,-129],[-6,-134],[5,-132],[13,-126],[11,-119],[1,-122],[-5,-115],[-9,-109]],f.coach?'#a9aaa2':isPlayer?'#172a43':'#35251f');
+    ctx.fillStyle='#fff';ctx.fillRect(7,-114,5,3);ctx.fillStyle='#171a24';ctx.fillRect(10,-114,2,3);ctx.fillRect(5,-118,8,2);ctx.fillRect(8,-102,5,2);
+    ctx.fillStyle='#b57153';ctx.fillRect(-10,-111,4,7);
+    if(f.coach){ctx.fillStyle='#dedbd0';ctx.fillRect(5,-104,10,3);ctx.fillRect(-12,-117,4,15);ctx.fillStyle='#80664f';ctx.fillRect(-5,-99,14,2);ctx.fillRect(0,-110,7,1);}
+    if(capColor){poly([[-15,-126],[-12,-136],[7,-136],[15,-127]],capColor);ctx.fillStyle=capColor;ctx.fillRect(5,-127,19,4);}
+    else if(isPlayer){ctx.fillStyle='#dc3545';ctx.fillRect(-12,-123,25,4);poly([[-12,-122],[-28,-117],[-19,-115]],'#dc3545');}
+    ctx.restore();
+    // Front arm reflects the same existing combat states.
+    if(seated){limb(17,-86,26,-63,14,skin);limb(26,-63,29,-40,12,light);hand(29,-39);}
+    else if(block){limb(16,-87,21,-70,14,skin);limb(21,-70,14,-110,12,light);hand(15,-111);}
+    else if(punch){limb(17,-86,36,-86,14,skin);limb(36,-86,61,-90,12,light);hand(65,-90);ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(40,-101,16,2);}
+    else{limb(17,-86,28,-68,14,skin);limb(28,-68,35,-95,12,light);hand(35,-98);}
+    if(f.state==='special'){ctx.strokeStyle='#ffda42';ctx.lineWidth=3;ctx.beginPath();ctx.arc(63,-90,19,0,Math.PI*2);ctx.stroke();}
+    if(!isPlayer&&f.telegraph>0){ctx.fillStyle='#ff3939';ctx.font='bold 20px monospace';ctx.fillText('!',0,-146);}
+    ctx.restore();
+  }
+
+  // ========================================================
+  // 10. DIBUJO DE PANTALLAS PRINCIPALES
+  // ========================================================
+  function draw() {
+    ctx.clearRect(0, 0, 640, 400);
+
+    // --- 1. PANTALLA DE TÍTULO ---
+    if (gameState === STATE.TITLE) {
+      drawStageBackground('gym_outside');
+      ctx.fillStyle='rgba(8,14,26,.62)';ctx.fillRect(0,0,640,400);
+      ctx.fillStyle='#dba748';ctx.fillRect(45,38,550,4);
+      ctx.textAlign='center';ctx.font='bold 38px monospace';ctx.fillStyle='#0b101b';ctx.fillText('CONURBANO',323,99);ctx.fillText('FIGHTER',323,141);
+      ctx.fillStyle='#f2d38b';ctx.fillText('CONURBANO',320,96);ctx.fillStyle='#ed6a47';ctx.fillText('FIGHTER',320,138);
+      ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL OCTÁGONO',320,163);
+      drawFighterSprite({x:320,y:316,dir:1,state:'idle'},true,'#4a525d',null);
+      ctx.fillStyle='rgba(6,11,20,.92)';ctx.fillRect(40,325,560,57);
+      ctx.strokeStyle='#dba748';ctx.strokeRect(40,325,560,57);
+      ctx.font='bold 17px monospace';ctx.fillStyle=Math.floor(Date.now()/600)%2?'#f3d18b':'#fff';ctx.fillText(savedRun?'ESPACIO · Z · CONTINUAR':'ESPACIO · Z · TOCÁ PARA EMPEZAR',320,350);
+      ctx.font='10px monospace';ctx.fillStyle='#b8c4cd';ctx.fillText(savedRun?'N · TOCÁ AQUÍ PARA NUEVA PARTIDA':'FLECHAS: MOVER · Z: PIÑA · X: PATADA · C: GUARDIA · V: ESPECIAL',320,370);
+      return;
+    }
+
+    // --- 2. INTRODUCCIÓN EN ESTACIÓN VILLA MADERO ---
+    if (gameState === STATE.INTRO_STORY) {
+      drawStageBackground('madero');
+      drawFighterSprite({ x: 200, y: 310, dir: 1, state: 'idle', hasBackpack: true }, true, '#4a525d', '#2c4268');
+      drawFighterSprite({ x: 430, y: 310, dir: -1, state: 'idle' }, false, '#1049a8', '#d62424');
+
+      // Caja de diálogo estilo 16-bits con el retrato aprobado
+      ctx.fillStyle = 'rgba(8, 10, 20, 0.94)';
+      ctx.fillRect(25, 250, 590, 130);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(25, 250, 590, 130);
+
+      const speakerPortrait = storyStep === 0 ? getPortraitCanvas('lautaro') : getPortraitCanvas('kevin');
+      ctx.drawImage(speakerPortrait, 40, 265, 96, 96);
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(40, 265, 96, 96);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = '11px "Press Start 2P"';
+      ctx.fillText(storyStep === 0 ? 'LAUTARO (23:15 HS - ESTACIÓN MADERO):' : 'EL KEVIN (CORTÁNDOTE EL PASO):', 152, 282);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '9px "Press Start 2P"';
+      if (storyStep === 0) {
+        ctx.fillText('"Recién me bajo del Belgrano Sur después de', 152, 310);
+        ctx.fillText('cursar y laburar todo el día. Solo quiero', 152, 330);
+        ctx.fillText('caminar tranquilo a casa..."', 152, 350);
+      } else {
+        ctx.fillText('"¡Eh amigo, no te regalés! Dejá la mochila', 152, 310);
+        ctx.fillText('acá mismo porque cobrás con los pibes."', 152, 330);
+        ctx.fillStyle = '#2ee653';
+        ctx.fillText('[TOCÁ O APRETÁ Z PARA DEFENDERTE]', 152, 358);
+      }
+      return;
+    }
+
+    // --- 3. PANTALLA "VS" CLÁSICA ESTILO STREET FIGHTER II ---
+    if (gameState === STATE.VS_SCREEN) {
+      const f = FIGHTS[currentFightIndex];
+      ctx.fillStyle = '#0b0e1c';
+      ctx.fillRect(0, 0, 640, 400);
+
+      // Rayo amarillo central partiendo la pantalla (exacto a las imágenes)
+      ctx.fillStyle = '#ffcc00';
+      ctx.beginPath();
+      ctx.moveTo(345, 0);
+      ctx.lineTo(295, 195);
+      ctx.lineTo(340, 195);
+      ctx.lineTo(285, 400);
+      ctx.lineTo(315, 215);
+      ctx.lineTo(275, 215);
+      ctx.closePath();
+      ctx.fill();
+
+      // Marco y Retrato Izquierdo: LAUTARO
+      ctx.drawImage(getPortraitCanvas('lautaro', currentFightIndex === 1), 45, 38, 190, 190);
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(45, 38, 190, 190);
+
+      // Marco y Retrato Derecho: RIVAL
+      ctx.drawImage(getPortraitCanvas(f.portrait), 405, 38, 190, 190);
+      ctx.strokeStyle = '#ef4444';
+      ctx.strokeRect(405, 38, 190, 190);
+
+      // Nombres grandes pixelados abajo de cada retrato
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '18px "Press Start 2P"';
+      ctx.fillText('LAUTARO', 140, 258);
+      ctx.fillText(f.name.split(' ')[0] === '"EL' ? 'HENDERSON' : f.name, 500, 258);
+
+      // Logo VS en el centro
+      ctx.fillStyle = '#e62e2e';
+      ctx.font = '28px "Press Start 2P"';
+      ctx.fillText('VS', 320, 155);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 2;
+      ctx.strokeText('VS', 320, 155);
+
+      // Caja de frases "Trash-Talk" estilo Street Fighter II
+      ctx.fillStyle = '#141829';
+      ctx.fillRect(30, 278, 580, 102);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeRect(30, 278, 580, 102);
+
+      ctx.font = '9px "Press Start 2P"';
+      ctx.fillStyle = '#7dd3fc';
+      ctx.fillText(f.quotePlayer, 320, 312);
+      ctx.fillStyle = '#fca5a5';
+      ctx.fillText(f.quoteEnemy, 320, 345);
+      ctx.fillStyle = '#aaa';
+      ctx.font = '8px "Press Start 2P"';
+      ctx.fillText(f.subtitle, 320, 368);
+      ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText(`LAUTARO · FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,394);
+      return;
+    }
+
+    // --- 4. COMBATE EN VIVO ---
+    if (gameState === STATE.FIGHT) {
+      const f = FIGHTS[currentFightIndex];
+      drawStageBackground(f.stage);
+      if(specialFx>0){
+        const t=(38-specialFx)/38;
+        ctx.fillStyle=specialFx>33?'rgba(255,235,170,.7)':'rgba(12,8,36,.78)';ctx.fillRect(0,70,640,330);
+        ctx.strokeStyle=specialFx%4<2?'#d09aff':'#f5c655';ctx.lineWidth=2;
+        for(let i=0;i<15;i++){
+          const y=85+i*20,x=(i*71+t*750)%730-90;
+          ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+70+30*t,y-9);ctx.stroke();
+        }
+        const radius=20+t*155;
+        ctx.strokeStyle='#fff3a0';ctx.lineWidth=6*(1-t)+1;ctx.beginPath();ctx.ellipse(specialOrigin+specialDirection*(25+t*80),player.y-85,radius*.45,radius,0,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle='#ffda70';ctx.textAlign='center';ctx.font='bold 22px monospace';ctx.fillText('¡FURIA DE MADERO!',320,109);
+      }
+
+      // HUD Superior con Retratos 90s al costado de cada barra de vida
+      ctx.drawImage(getPortraitCanvas('lautaro', f.isPrologue && player.hp < 50), 8, 8, 58, 58);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(8, 8, 58, 58);
+
+      ctx.drawImage(getPortraitCanvas(f.portrait), 574, 8, 58, 58);
+      ctx.strokeRect(574, 8, 58, 58);
+
+      // Barras de vida estilo Street Fighter II
+      ctx.fillStyle = '#550000';
+      ctx.fillRect(68, 18, 210, 18);
+      ctx.fillRect(362, 18, 210, 18);
+
+      const pRatio = Math.max(0, player.hp / player.maxHp);
+      const eRatio = Math.max(0, enemy.hp / enemy.maxHp);
+
+      ctx.fillStyle = pRatio > 0.3 ? '#2ee653' : '#ffcc00';
+      ctx.fillRect(68, 18, 210 * pRatio, 18);
+
+      ctx.fillStyle = '#2ee653';
+      ctx.fillRect(362 + 210 * (1 - eRatio), 18, 210 * eRatio, 18);
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeRect(68, 18, 210, 18);
+      ctx.strokeRect(362, 18, 210, 18);
+
+      // Barra de energía Especial
+      ctx.fillStyle = '#222';
+      ctx.fillRect(68, 40, 140, 8);
+      ctx.fillStyle = player.energy >= 100 ? '#ffcc00' : '#00bfff';
+      ctx.fillRect(68, 40, 1.4 * player.energy, 8);
+
+      // Nombres en HUD
+      ctx.font = '9px "Press Start 2P"';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.fillText('LAUTARO', 68, 59);
+      ctx.textAlign = 'right';
+      ctx.fillText(f.name, 572, 59);
+
+      // Reloj Central
+      ctx.fillStyle = '#16192b';
+      ctx.fillRect(292, 10, 56, 44);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeRect(292, 10, 56, 44);
+      ctx.fillStyle = '#ffcc00';
+      ctx.textAlign = 'center';
+      ctx.font = '16px "Press Start 2P"';
+      ctx.fillText(String(fightTimer).padStart(2, '0'), 320, 38);
+
+      // Luchadores
+      drawFighterSprite(player, true, '#4a525d', f.isPrologue ? '#2c4268' : null);
+      drawFighterSprite(enemy, false, f.color, f.capColor);
+
+      if(specialFx>0){
+        const t=(38-specialFx)/38,x=specialOrigin+specialDirection*(50+t*110),y=player.y-88;
+        ctx.save();ctx.translate(x,y);ctx.rotate(t*2);
+        ctx.fillStyle=specialFx%2?'#fff0ba':'#f3a62a';ctx.beginPath();
+        for(let i=0;i<16;i++){const angle=i*Math.PI/8,r=i%2?14:35;const px=Math.cos(angle)*r,py=Math.sin(angle)*r;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fill();ctx.restore();
+      }
+
+      // Si entra El Braian en la emboscada del prólogo
+      if (braianAmbush && braianAmbush.active) {
+        drawFighterSprite({ x: braianAmbush.x, y: braianAmbush.y, dir: 1, state: 'attack' }, false, '#2e6f40', '#178a3d');
+      }
+
+      // Textos de daño flotantes
+      ctx.font = '9px "Press Start 2P"';
+      ctx.textAlign = 'center';
+      floatingTexts.forEach(t => {
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.text, t.x, t.y);
+      });
+
+      // Cartel central del Round
+      if (fightBannerTimer > 0) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+        ctx.fillRect(40, 155, 560, 42);
+        ctx.strokeStyle = '#ffcc00';
+        ctx.strokeRect(40, 155, 560, 42);
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = '11px "Press Start 2P"';
+        ctx.fillText(fightBanner, 320, 181);
+      }
+      return;
+    }
+
+    if(gameState===STATE.BRIEF){
+      const rival=FIGHTS[currentFightIndex];
+      ctx.fillStyle='#77725d';ctx.fillRect(0,0,640,400);
+      ctx.fillStyle='#545747';ctx.fillRect(0,135,640,150);
+      ctx.fillStyle='#514434';ctx.fillRect(0,285,640,115);
+      ctx.fillStyle='#a59b79';ctx.fillRect(18,18,120,156);
+      ctx.fillStyle='#343d3b';ctx.fillRect(26,28,105,134);
+      ctx.fillStyle='#9d9881';ctx.fillRect(32,32,93,60);
+      ctx.fillStyle='#bdc2aa';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText('BOXEO',78,57);ctx.fillText('MADERO',78,76);
+      ctx.fillStyle='#796042';ctx.fillRect(170,40,435,145);
+      ctx.fillStyle='#183d32';ctx.fillRect(178,48,419,129);
+      ctx.drawImage(getPortraitCanvas(rival.portrait),510,68,80,80);
+      ctx.fillStyle='#e2e7ca';ctx.textAlign='left';ctx.font='14px monospace';
+      ctx.fillText(`SÁBADO: ${rival.name}`,195,72);
+      ctx.font='12px monospace';
+      const rows=[['RESISTENCIA',rival.hp/550],['PEGADA',rival.atk/25],['VELOCIDAD',rival.speed/2.6]];
+      rows.forEach(([label,value],i)=>{const y=99+i*25;ctx.fillStyle='#e2e7ca';ctx.fillText(label,195,y);ctx.strokeStyle='#aebc9c';ctx.strokeRect(298,y-10,165,10);ctx.fillStyle='#c7d3b0';ctx.fillRect(299,y-9,163*value,8);});
+      ctx.fillStyle='#b3aa85';ctx.fillRect(305,179,50,3);ctx.fillStyle='#eee';ctx.fillRect(320,177,12,3);
+      drawFighterSprite({x:120,y:284,dir:1,state:'idle',coach:true},false,'#d8c9a3',null);
+      const pointing=Date.now()/1500%3;
+      const targetY=96+Math.floor(pointing)*25;
+      ctx.strokeStyle='#d3a27d';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(142,198);ctx.lineTo(166,185);ctx.lineTo(181,177);ctx.stroke();
+      ctx.strokeStyle='#ccb886';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(181,177);ctx.lineTo(293,targetY);ctx.stroke();
+
+      ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='13px monospace';
+      ctx.fillText(`LUNES · SEMANA ${week} · CUARTITO DEL GIMNASIO`,385,24);
+
+      ctx.fillStyle='#141828';ctx.fillRect(25,290,590,98);ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,290,590,98);
+      const advice=[
+        ['Tito pelea simple: avanza, avisa el golpe y deja huecos.', 'Igual aguanta golpes: trabajá fuerza y técnica.', 'No te quemes entrenando. Llegá descansado al debut.'],
+        ['El Rulo presiona: avanza y ataca con más frecuencia.', 'Cuerda para moverte y aguante para bancar sus golpes.', 'Alterná golpes y guardia: repetir ataques le facilita cubrirse.'],
+        ['Nico se cubre: probá patadas y especial para abrirlo.', 'Mezclá fuerza y aguante. No descuides la recuperación.', 'Guardá la especial para abrir su defensa.'],
+        ['Kevin espera: si repetís golpes te contragolpea rápido.', 'Necesitás aguante y técnica para una especial fuerte.', 'Entrá con cabeza fría: no hace falta atacar todo el tiempo.'],
+        ['Henderson presiona fuerte y aguanta más que los demás.', 'Llegá recuperado; fuerza y aguante te van a servir.', 'Usá guardia y especial. No regales vida por apurarte.']
+      ][currentFightIndex-1];
+      ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(`EL SÁBADO: ${rival.name}`,320,308);
+      advice.forEach((line,i)=>ctx.fillText(line,320,328+i*15));
+      ctx.fillStyle='#2ee653';ctx.font='13px monospace';ctx.fillText('[TOCÁ O ESPACIO · ELEGIR EL PLAN]',320,379);return;
+    }
+
+    if(gameState === STATE.WEEK_RESULT){
+      drawStageBackground('gym_ring');
+      ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);
+      drawFighterSprite({x:260,y:290,dir:1,state:'idle'},true,'#4a525d',null);
+      drawFighterSprite({x:380,y:290,dir:-1,state:'idle'},false,'#e5d3b7',null);
+      ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);
+      ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 20px monospace';
+      ctx.fillText(weekResult.won?'¡GANASTE LA PELEA!':'ESTA VEZ NO ALCANZÓ',340,44);
+      ctx.fillStyle='#fff';ctx.font='13px monospace';ctx.fillText(`SÁBADO · SEMANA ${week} · VS ${weekResult.rival}`,340,68);
+      ctx.fillStyle='#141828';ctx.fillRect(25,303,590,85);ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,303,590,85);
+      const remarks=[
+        'Bien, pibe. Ganaste la primera. Ahora empieza el trabajo.',
+        'Ya no sos el que entró por esa puerta. Pero falta camino.',
+        'Ganaste la regional. La próxima es con Kevin. Sin bronca.',
+        'La revancha quedó atrás. Ahora vamos por la UFC.'
+      ];
+      ctx.fillStyle='#fff';ctx.font='13px monospace';
+      ctx.fillText(weekResult.won?remarks[Math.min(3,currentFightIndex-1)]:'Perder también enseña. El lunes corregimos lo que faltó.',320,328);
+      ctx.fillStyle='#7dd3fc';ctx.fillText(`PREMIO: $${weekResult.prize} · DINERO: $${playerStats.money} · FATIGA: ${playerStats.fatigue}/70`,320,348);
+      ctx.fillStyle='#2ee653';ctx.fillText(sceneFrame<120?'El ruido del ring se apaga...':`[CONTINUAR] LUNES · SEMANA ${week+1}`,320,376);
+      return;
+    }
+
+    // Transición narrativa y llegada al gimnasio.
+    if ([STATE.POST_ROBO, STATE.ARRIVAL, STATE.COACH, STATE.TRAIN_TRAVEL].includes(gameState)) {
+      drawStageBackground(gameState === STATE.POST_ROBO ? 'bedroom' : [STATE.ARRIVAL,STATE.TRAIN_TRAVEL].includes(gameState) ? 'gym_outside' : 'gym_interior');
+      if ([STATE.ARRIVAL,STATE.TRAIN_TRAVEL].includes(gameState)) {
+        const travel=gameState===STATE.TRAIN_TRAVEL, night=travel&&travelMode==='exit';
+        ctx.fillStyle='rgba(18,33,32,.85)';ctx.fillRect(12,12,222,27);
+        ctx.fillStyle='#e5dfc8';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('VILLA MADERO · LA MATANZA',123,30);
+        const x = travel ? (night ? 488-sceneFrame*3.6 : Math.min(488,80+sceneFrame*4)) : Math.min(488,55+sceneFrame*1.65);
+        if(sceneFrame < 270) drawFighterSprite({x,y:310,dir:night?-1:1,state:sceneFrame%24<12?'walk':'idle',hasBackpack:false},true,'#4a525d',null);
+        ctx.fillStyle = '#111';ctx.fillRect(0,345,640,55);
+        ctx.fillStyle = '#ffcc00';ctx.font = '11px monospace';
+        const day=['LUNES','MIÉRCOLES','VIERNES'][Math.min(2,3-playerStats.trainsLeft-(night?1:0))];
+        ctx.fillText(travel?`${day} · ${night?'21:00 · SALIDA DEL GIMNASIO':'08:00 · LLEGADA AL GIMNASIO'}`:'AL OTRO DÍA · VILLA MADERO, LA MATANZA',320,368);
+        ctx.fillText(travel?(night?'Día terminado. A casa a descansar.':'Otro día de trabajo con Don Osvaldo.'):sceneFrame<240?'Lautaro cruza la calle y entra.':'[TOCÁ PARA CONTINUAR]',320,389);
+      } else {
+        ctx.fillStyle = 'rgba(0,0,0,.15)';ctx.fillRect(0,0,640,400);
+        const coach = gameState === STATE.COACH;
+        if(coach) {ctx.drawImage(getPortraitCanvas('osvaldo'),250,80,110,110);} else {ctx.drawImage(getPortraitCanvas('lautaro',true),25,205,64,64);}
+        ctx.fillStyle='#141828';ctx.fillRect(25,300,590,90);
+        ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,300,590,90);
+        ctx.textAlign='center';ctx.font='16px monospace';ctx.fillStyle='#ffcc00';
+        ctx.font='13px monospace';ctx.fillText(coach?'DON OSVALDO · BOXEO MADERO':'LAUTARO · EN SU HABITACIÓN, DESPUÉS DEL ROBO',320,318);
+        ctx.fillStyle='#fff';ctx.font='12px monospace';
+        const lines=coach?[
+          '¿Querés pelear? Primero tenés que entrenar, pibe.',
+          'Lunes, miércoles y viernes: tres sesiones.',
+          'Pesas, bolsa, cuerda y técnica. El sábado, pelea.',
+          'Primero amateurs. Kevin va a tener que esperar.'
+        ]:storyStep===0?[
+          'Uh... me robaron todo. ¿Ahora qué hago?',
+          'Pegar por bronca no alcanza. Me falta entrenamiento.'
+        ]:[
+          'A unas cuadras de la estación de Villa Madero está el gimnasio.',
+          'Dicen que Don Osvaldo enseña boxeo. Mañana voy a verlo.'
+        ];
+        lines.forEach((line,i)=>ctx.fillText(line,320,335+i*12));
+        ctx.fillStyle='#2ee653';ctx.font='13px monospace';ctx.fillText('[TOCÁ O APRETÁ ESPACIO]',320,387);
+      }
+      return;
+    }
+
+    // --- 6. GIMNASIO DE ENTRENAMIENTO (ELECCIÓN DE STATS + MINIJUEGO) ---
+    if(gameState===STATE.GYM && playerStats.trainsLeft===0){
+      drawStageBackground('gym_ring');ctx.fillStyle='rgba(8,12,22,.87)';ctx.fillRect(0,0,640,400);
+      ctx.drawImage(getPortraitCanvas('lautaro'),25,22,74,74);
+      ctx.drawImage(getPortraitCanvas(FIGHTS[currentFightIndex].portrait),541,22,74,74);
+      ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 18px monospace';ctx.fillText('SÁBADO · DÍA DE PELEA',320,45);
+      ctx.fillStyle='#fff';ctx.font='14px monospace';ctx.fillText(`LAUTARO VS ${FIGHTS[currentFightIndex].name}`,320,75);
+      ctx.fillStyle='#7dd3fc';ctx.font='13px monospace';
+      ctx.fillText(`DINERO $${playerStats.money} · FATIGA ${playerStats.fatigue}/70`,320,124);
+      ctx.fillText(`VIDA INICIAL ${Math.round((110+playerStats.aguante*18)*(1-playerStats.fatigue/350))}`,320,145);
+      const options=fightShop?['COMIDA · $40','MASAJE · $60']:['EMPEZAR PELEA','PREPARARME ANTES'];
+      options.forEach((label,i)=>{const x=40+i*300;ctx.fillStyle=i?'#24413b':'#8d302e';ctx.fillRect(x,185,260,60);ctx.strokeStyle='#ffcc00';ctx.strokeRect(x,185,260,60);ctx.fillStyle='#fff';ctx.font='bold 16px monospace';ctx.fillText(label,x+130,221);});
+      ctx.fillStyle='#c4ced0';ctx.font='12px monospace';ctx.fillText(fightShop?'Comida: -8 fatiga · Masaje: -30 fatiga':'La semana terminó. Prepará tu condición o subí al ring.',320,278);
+      if(fightShop){ctx.fillStyle='#263349';ctx.fillRect(200,320,240,45);ctx.strokeStyle='#7dd3fc';ctx.strokeRect(200,320,240,45);ctx.fillStyle='#fff';ctx.fillText('VOLVER A LA PELEA',320,347);}
+      ctx.fillStyle='#a6d1bd';ctx.font='11px monospace';ctx.fillText(recoveryMessage,320,302);
+      return;
+    }
+
+    if (gameState === STATE.GYM) {
+      drawStageBackground('gym_interior');
+      ctx.fillStyle = 'rgba(10, 10, 18, 0.88)';
+      ctx.fillRect(0, 0, 640, 400);
+
+      // Encabezado con retrato de Don Osvaldo y el próximo rival
+      ctx.drawImage(getPortraitCanvas('osvaldo'), 25, 18, 72, 72);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeRect(25, 18, 72, 72);
+
+      const nextFight = FIGHTS[currentFightIndex];
+      ctx.drawImage(getPortraitCanvas(nextFight.portrait), 543, 18, 72, 72);
+      ctx.strokeStyle = '#ef4444';
+      ctx.strokeRect(543, 18, 72, 72);
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = '13px "Press Start 2P"';
+      ctx.fillText('GIMNASIO DE DON OSVALDO', 320, 36);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '9px "Press Start 2P"';
+      ctx.fillText(`PRÓXIMA PELEA: VS ${nextFight.name}`, 320, 58);
+
+      ctx.fillStyle = '#2ee653';
+      ctx.fillText(`SEMANA ${week} | SESIONES: ${3-playerStats.trainsLeft}/3`, 320, 82);
+      ctx.fillStyle = '#7dd3fc';ctx.font='11px monospace';
+      ctx.fillText(`DINERO: $${playerStats.money} · FATIGA: ${playerStats.fatigue}/70 · VIDA -${Math.round(playerStats.fatigue/3.5)}%`,320,99);
+
+
+      ctx.fillStyle = '#aaa';
+      ctx.font = '8px "Press Start 2P"';
+      ctx.fillText(playerStats.trainsLeft ? `${['LUNES', 'MIÉRCOLES', 'VIERNES'][3-playerStats.trainsLeft]}: elegí tu entrenamiento` : 'SÁBADO: listo para la pelea' , 320, 112);
+
+      // Tarjetas de los 4 Stats elegibles
+      const statsInfo = [
+        { key: 'fuerza', label: 'PESAS · FUERZA', val: playerStats.fuerza, col: '#e62e2e' },
+        { key: 'velocidad', label: 'CUERDA · VELOCIDAD', val: playerStats.velocidad, col: '#3b82f6' },
+        { key: 'aguante', label: 'BOLSA · AGUANTE', val: playerStats.aguante, col: '#2ee653' },
+        { key: 'tecnica', label: 'BOXEO · TÉCNICA', val: playerStats.tecnica, col: '#ffcc00' }
+      ];
+
+      statsInfo.forEach((st, idx) => {
+        const bx = 40 + (idx % 2) * 280;
+        const by = 130 + Math.floor(idx / 2) * 68;
+        ctx.fillStyle = '#1b2036';
+        ctx.fillRect(bx, by, 260, 54);
+        ctx.strokeStyle = st.col;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bx, by, 260, 54);
+
+        ctx.textAlign = 'left';
+        ctx.fillStyle = st.col;
+        ctx.font = '9px "Press Start 2P"';
+        ctx.fillText(st.label, bx + 12, by + 22);
+
+        ctx.fillStyle = '#fff';
+        ctx.font='12px monospace';
+        const tired=playerStats.fatigue;
+        const effects={
+          fuerza:`Piña ${Math.round(8+playerStats.fuerza*1.8)} · Patada ${Math.round(13+playerStats.fuerza*1.8)}`,
+          velocidad:`Movimiento ${((2.6+playerStats.velocidad*.45)*(1-tired/470)).toFixed(1)}`,
+          aguante:`Vida de pelea ${Math.round((110+playerStats.aguante*18)*(1-tired/350))}`,
+          tecnica:`Especial ${Math.round(32+playerStats.fuerza*1.8+playerStats.tecnica*3)}`
+        };
+        ctx.fillText(`Nv.${st.val} · ${effects[st.key]}`,bx+12,by+42);
+      });
+
+      const recoveryOptions=[['DESCANSAR GRATIS',30],['COMIDA $40',230],['MASAJE $60',430]];
+      recoveryOptions.forEach(([label,x])=>{ctx.fillStyle='#24413b';ctx.fillRect(x,270,180,36);ctx.strokeStyle='#72b6a3';ctx.strokeRect(x,270,180,36);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='12px monospace';ctx.fillText(label,x+90,293);});
+      ctx.fillStyle='#b9c6c9';ctx.textAlign='center';ctx.font='10px monospace';
+      ctx.fillText(recoveryMessage||'Descanso: ocupa un día · Comida: ayuda semanal · Masaje: -30 fatiga',320,321);
+      ctx.font='9px monospace';ctx.fillText(saveAvailable?'PROGRESO GUARDADO EN ESTE NAVEGADOR':'GUARDADO NO DISPONIBLE EN ESTE NAVEGADOR',320,392);
+
+      // Si el minijuego de manoplas/bolsa está activo
+      if (minigame.active) {
+        ctx.fillStyle = 'rgba(0,0,0,0.94)';
+        ctx.fillRect(70, 125, 500, 190);
+        ctx.strokeStyle = '#ffcc00';
+        ctx.strokeRect(70, 125, 500, 190);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffcc00';
+        ctx.font = '11px "Press Start 2P"';
+        ctx.fillText(`ENTRENANDO ${minigame.statTarget.toUpperCase()} (${minigame.attempts}/3)`, 320, 160);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '9px "Press Start 2P"';
+        ctx.font='12px monospace';
+        const st=minigame.statTarget;
+        const instruction=st==='tecnica'?'SEGUÍ LA SECUENCIA · Z: PIÑA · X: PATADA':st==='aguante'?'BOLSA: 12 GOLPES EN 5 SEGUNDOS · Z O TOCÁ':st==='velocidad'?'CUERDA: UN SALTO POR VUELTA EN LA ZONA VERDE':'PESAS: MARCÁ 3 REPETICIONES EN LA ZONA VERDE';
+        ctx.fillText(instruction,320,190);
+        if(st==='tecnica'){
+          ctx.fillStyle='#7dd3fc';ctx.font='bold 20px monospace';
+          minigame.sequence.forEach((key,i)=>{ctx.fillStyle=i<minigame.attempts?'#748378':i===minigame.attempts?'#ffcc00':'#fff';ctx.fillText(key==='KeyZ'?'Z':'X',210+i*44,237);});
+          ctx.fillStyle='#bbb';ctx.font='12px monospace';ctx.fillText('Usá los botones PIÑA y PATADA en el celular',320,304);
+        } else if(st==='aguante'){
+          ctx.fillStyle='#ffcc00';ctx.font='bold 22px monospace';ctx.fillText(`${minigame.hits}/12 · ${Math.max(0,(300-minigame.frames)/60).toFixed(1)}s`,320,238);
+        }
+
+
+        // Equipo animado: pesas, bolsa o práctica de boxeo.
+        const pulse = Math.sin(minigame.cursor / 8) * 7;
+        ctx.fillStyle = '#d69a75'; ctx.fillRect(310, 263, 18, 17);
+        ctx.fillStyle = '#4a525d'; ctx.fillRect(306, 280, 26, 28);
+        ctx.fillStyle = '#d69a75';
+        if (minigame.statTarget === 'fuerza') {
+          ctx.fillRect(293, 277-pulse, 13, 6); ctx.fillRect(332, 277-pulse, 13, 6);
+          ctx.fillStyle='#aaa';ctx.fillRect(281,270-pulse,76,4);
+          ctx.fillStyle='#444';ctx.fillRect(279,260-pulse,10,23);ctx.fillRect(348,260-pulse,10,23);
+        } else if (minigame.statTarget === 'velocidad') {
+          ctx.strokeStyle='#ddd';ctx.beginPath();ctx.ellipse(319,287,38,25+ pulse,0,0,Math.PI*2);ctx.stroke();
+        } else {
+          ctx.fillRect(332,282,22+pulse,5);
+          ctx.fillStyle='#b22';ctx.fillRect(370+pulse,261,24,46);
+          ctx.fillStyle='#aaa';ctx.fillRect(380+pulse,252,3,9);
+        }
+
+        // Barra de precisión
+        if(!['tecnica','aguante'].includes(minigame.statTarget)){
+        ctx.fillStyle = '#333';
+        ctx.fillRect(120, 220, 400, 26);
+        ctx.fillStyle = '#2ee653';
+        ctx.fillRect(120 + 400 * 0.38, 220, 400 * 0.24, 26); // Zona verde
+
+        // Cursor móvil
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(120 + (minigame.cursor / 100) * 392, 214, 8, 38);
+        }
+      }
+
+      // Botón para ir a la pelea
+      ctx.fillStyle = '#991f1f';
+      ctx.fillRect(200, 335, 240, 45);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.strokeRect(200, 335, 240, 45);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '12px "Press Start 2P"';
+      ctx.font = '10px monospace';
+      ctx.fillText(playerStats.trainsLeft ? 'COMPLETÁ LOS 3 DÍAS' : 'SÁBADO · ¡IR A PELEAR!', 320, 363);
+      return;
+    }
+
+    // --- 7. FINAL CAMPEÓN MUNDIAL UFC ---
+    if (gameState === STATE.VICTORY_FINAL) {
+      drawStageBackground('ufc_octagon');
+      ctx.fillStyle = 'rgba(0,0,0,0.82)';
+      ctx.fillRect(0, 0, 640, 400);
+
+      ctx.drawImage(getPortraitCanvas('lautaro'), 140, 45, 130, 130);
+      ctx.strokeStyle = '#ffcc00';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(140, 45, 130, 130);
+
+      ctx.drawImage(getPortraitCanvas('osvaldo'), 370, 45, 130, 130);
+      ctx.strokeRect(370, 45, 130, 130);
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffcc00';
+      ctx.font = '16px "Press Start 2P"';
+      ctx.fillText('¡CAMPEÓN MUNDIAL DE LA UFC!', 320, 215);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '9px "Press Start 2P"';
+      ctx.fillText('Lautaro recuperó su mochila en el torneo de Villa Madero,', 320, 250);
+      ctx.fillText('se volvió viral y noqueó a Henderson en Las Vegas', 320, 272);
+      ctx.fillText('con Don Osvaldo en su esquina.', 320, 294);
+
+      ctx.fillStyle = '#2ee653';
+      ctx.fillText('[TOCÁ O APRETÁ ESPACIO PARA JUGAR DE NUEVO]', 320, 345);
+    }
+  }
+
+  // ========================================================
+  // 11. PANEL DE SUBAGENTES ADVERSARIALES
+  // ========================================================
+  const modal = document.getElementById('subagent-modal');
+  const modalContent = document.getElementById('subagent-content');
+
+  document.getElementById('btn-subagents').addEventListener('click', () => {
+    const f = FIGHTS[currentFightIndex];
+    modalContent.innerHTML = `
+      <div class="agent-card">
+        <div class="agent-title">🎨 AGENTE DE ARTE 16-BITS (RETRO CRT)</div>
+        <div>Retratos integrados con paleta de los 90 y tramado (dithering) en la pantalla VS y el HUD: Lautaro con la herida en la mejilla, El Kevin con gorra roja hacia atrás, Don Osvaldo con toalla al cuello, El Braian de campera verde y Henderson con protector bucal frente a la bandera.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-title">⚖️ AGENTE ADVERSARIAL DE BALANCE</div>
+        <div>En el prólogo en Estación Villa Madero ahora podés conectarle varios golpes seguidos a Kevin sacándole 3-4 HP para que se sienta que te defendiste, antes de que te supere en daño y entre El Braian de atrás.</div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-title">🥊 AGENTE ENTRENADOR (LECTURA DE RIVAL ACTUAL: ${f.name})</div>
+        <div>Tus stats actuales: Fuerza ${playerStats.fuerza} | Velocidad ${playerStats.velocidad} | Aguante ${playerStats.aguante} | Técnica ${playerStats.tecnica}. Aprovechá el cartel rojo (!) sobre el rival para anticiparlo con golpe crítico.</div>
+      </div>
+    `;
+    modal.style.display = 'flex';
+  });
+
+  document.getElementById('btn-close-modal').addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  // Iniciar Loop
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+</body>
+</html>

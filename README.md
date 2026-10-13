@@ -1,33 +1,35 @@
-# Ynera Fighting (título provisorio: *Del Barrio al Octágono*)
+# Conurbano Fighter
 
-Juego 2D en pixel art estilo 16 bits (Sega Genesis / Mega Drive).
+Prototipo jugable de pelea y entrenamiento en Villa Madero. HTML y JavaScript sin dependencias de ejecución.
 
-Un pibe llega a **Villa Celina / Villa Madero** (La Matanza, Provincia de Buenos Aires). Apenas se baja del tren lo roban y lo cagan a trompadas. Entonces empieza a entrenar en un gimnasio del barrio, va eligiendo qué ejercicios hacer para subir sus stats y pelea contra rivales cada vez más difíciles, hasta llegar a la liga más grande de MMA del mundo, la **UCF** (liga ficticia).
+## Jugar
 
-- **Gestión:** semanas de entrenamiento en las que elegís actividades que suben stats.
-- **Acción:** peleas arcade en 2D, de perfil, con piñas, patadas y especiales que se desbloquean. Sin lucha en el piso.
-- **Recorrido:** peleas locales, después circuito continental de segunda línea y, por último, la UCF.
-- **Protagonista:** el nombre lo elige cada jugador.
-- **Tono:** barrio con corazón. Hay peligro, pero también entrenadores, vecinos y amigos que te bancan.
-
-## Documentación
-
-- [`docs/GDD.md`](docs/GDD.md): documento de diseño (historia, mecánicas, stats, peleas, poderes, etapas).
-- [`docs/ROADMAP.md`](docs/ROADMAP.md): fases del proyecto y tareas del primer prototipo.
-
-![Mockup de la escena de la estación](assets/mockups/escena_estacion.png)
-
-## Stack (todo gratis)
-
-- **Motor:** [Phaser 3](https://phaser.io/) + TypeScript + Vite. Corre en el navegador y se comparte con un link.
-- **Arte:** generado por código con Python + Pillow (`tools/art/`), con la paleta de 9 bits del Genesis.
-- **Publicación:** GitHub Pages.
-
-Para regenerar el arte:
+Abrí `index.html` en un navegador. Para un origen estable y guardar la partida:
 
 ```bash
-pip install pillow
-python3 tools/art/mockup_estacion.py
+python3 -m http.server 8000
 ```
 
-> Estado: pre-producción. Hay GDD y un primer mockup de arte; todavía no hay código del juego.
+Entrá a http://localhost:8000. El guardado usa localStorage del navegador: no se comparte entre dispositivos ni orígenes y puede no estar disponible en algunas vistas previas o modos privados. Conservá el mismo origen para retomar.
+
+- Flechas: moverse. Z: piña. X: patada. C: guardia. V: especial.
+- Espacio o toque: avanzar escenas. N en portada: nueva partida.
+- En celular: botones en pantalla. Boxeo usa PIÑA y PATADA.
+
+## Implementado
+
+Portada, robo, reflexión en la habitación, entrada al gimnasio, charla de los lunes con pizarrón, tres actividades semanales, descanso, fatiga, premios, comida y masaje, peleas progresivas, resultados y especial Furia de Madero.
+
+Ejercicios: pesas con precisión, cuerda con saltos por vuelta, bolsa con límite de tiempo y secuencias de boxeo. Los rivales tienen estilos simple, presión, defensa o contragolpe; Osvaldo da pistas acordes.
+
+El guardado conserva el último punto de preparación completado; si cerrás durante una pelea, se retoma su preparación. Completar la campaña borra ese guardado.
+
+## Validación
+
+```bash
+node tools/check-game.cjs
+```
+
+Pruebas de lógica con simulación de canvas y navegador: escenas, entrenamiento, compras, especial, resultado, guardado y continuación. No reemplazan la prueba de jugabilidad en un navegador real. Dificultad y precios siguen en calibración.
+
+La documentación previa en `docs/` y el mockup se conservan como antecedentes; parte del diseño describe ideas aún no implementadas.
