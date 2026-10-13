@@ -1,35 +1,38 @@
 # Conurbano Fighter
 
-Prototipo jugable de pelea y entrenamiento en Villa Madero. HTML y JavaScript sin dependencias de ejecución.
+Juego de pelea y entrenamiento en Villa Madero, hecho con HTML y JavaScript sin dependencias para jugar.
 
-## Jugar
+## Abrir
 
-Abrí `index.html` en un navegador. Para un origen estable y guardar la partida:
+Abrí `conurbano-fighter.html`: incluye todos los retratos y no necesita una carpeta de imágenes ni cargar fuentes de internet.
+
+Para jugar desde un origen estable y continuar en el mismo navegador:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Entrá a http://localhost:8000. El guardado usa localStorage del navegador: no se comparte entre dispositivos ni orígenes y puede no estar disponible en algunas vistas previas o modos privados. Conservá el mismo origen para retomar.
+Entrá a http://localhost:8000. `index.html` es la fuente con assets separados. LocalStorage no comparte la partida entre dispositivos, archivos u orígenes; algunos modos privados y vistas previas no permiten guardar. El panel avisa si falla.
+
+## Juego
 
 - Flechas: moverse. Z: piña. X: patada. C: guardia. V: especial.
-- Espacio o toque: avanzar escenas. N en portada: nueva partida.
-- En celular: botones en pantalla. Boxeo usa PIÑA y PATADA.
+- Espacio: avanzar. N en portada: nueva partida. Botones táctiles y controles grandes para preparación.
+- Lunes, miércoles y viernes: elegí entrenamiento o descanso. El sábado: prepararse o pelear.
+- Seis peleas argentinas, cierre de la historia con Braian y cuatro fechas internacionales de kickboxing ficticio.
+- Fama desbloquea equipo, sponsors y auto. El equipo avanzado da más ganancia y fatiga; se puede desactivar. Los bienes no dan fuerza.
+- Una oferta clandestina permite elegir dinero extra con riesgo contra una ruta deportiva y sponsor legal.
 
-## Implementado
+El guardado conserva preparación, compras, decisiones, premios pendientes y el final. Si cerrás durante la pelea, se reinicia desde su preparación. Los premios cobrados no se duplican al continuar. Se migran los guardados de la versión anterior.
 
-Portada, robo, reflexión en la habitación, entrada al gimnasio, charla de los lunes con pizarrón, tres actividades semanales, descanso, fatiga, premios, comida y masaje, peleas progresivas, resultados y especial Furia de Madero.
-
-Ejercicios: pesas con precisión, cuerda con saltos por vuelta, bolsa con límite de tiempo y secuencias de boxeo. Los rivales tienen estilos simple, presión, defensa o contragolpe; Osvaldo da pistas acordes.
-
-El guardado conserva el último punto de preparación completado; si cerrás durante una pelea, se retoma su preparación. Completar la campaña borra ese guardado.
-
-## Validación
+## Desarrollo y comprobaciones
 
 ```bash
 node tools/check-game.cjs
+node tools/simulate-combat.cjs
+node tools/package-game.cjs
 ```
 
-Pruebas de lógica con simulación de canvas y navegador: escenas, entrenamiento, compras, especial, resultado, guardado y continuación. No reemplazan la prueba de jugabilidad en un navegador real. Dificultad y precios siguen en calibración.
+Las pruebas de lógica y las simulaciones no certifican que el juego sea divertido. El balance necesita una prueba humana. Para inspeccionar imágenes del canvas, `tools/render-game.cjs` requiere opcionalmente `@napi-rs/canvas`, pero el juego no lo necesita.
 
-La documentación previa en `docs/` y el mockup se conservan como antecedentes; parte del diseño describe ideas aún no implementadas.
+Ver [PENDIENTES.md](PENDIENTES.md) para las verificaciones que faltan. Los documentos de `docs/` son antecedentes de diseño.

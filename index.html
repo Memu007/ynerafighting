@@ -2,10 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Conurbano Fighter 16-Bit: De Villa Madero al Octágono</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conurbano Fighter 16-Bit: De Villa Madero al mundo</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
   :root {
     --crt-bg: #07070c;
@@ -26,7 +25,7 @@
     padding: 0;
     background-color: var(--crt-bg);
     color: #fff;
-    font-family: 'Press Start 2P', monospace, sans-serif;
+    font-family: monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -63,8 +62,8 @@
     inset: 0;
     pointer-events: none;
     background: 
-      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.38) 50%),
-      radial-gradient(circle at center, transparent 62%, rgba(0, 0, 0, 0.68) 100%);
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+      radial-gradient(circle at center, transparent 62%, rgba(0, 0, 0, 0.40) 100%);
     background-size: 100% 4px, 100% 100%;
     z-index: 15;
   }
@@ -164,9 +163,30 @@
     font-size: 11px;
   }
 
+  #scene-controls{width:100%;max-width:840px;margin:8px 0;}#scene-controls button{width:100%;min-height:44px;font:16px monospace;}
   [hidden] {display:none !important;}
+  #career-panel,#gym-actions,#career-choice{width:100%;max-width:840px;background:#151d2c;border:1px solid #394b63;border-radius:10px;padding:14px;margin:8px 0;font:16px/1.5 system-ui,sans-serif;}
+  #career-panel{display:flex;gap:16px;flex-wrap:wrap;color:#c0cbd8;}
+  #career-panel b{color:#ffda62;}
+  #player-panel .stat{border-top:1px solid #394b63;padding-top:8px;}
+  #player-panel small{display:block;color:#b8c8d7;font-size:13px;}
+  #gym-actions .actions,#career-choice .actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  #gym-actions button,#career-choice button{min-height:48px;background:#22334b;border:1px solid #7596bf;border-radius:7px;color:#fff;font:16px/1.35 system-ui,sans-serif;padding:12px;cursor:pointer;text-align:left;}
+  button:focus-visible,summary:focus-visible{outline:3px solid #ffcc00;outline-offset:3px;}
+  #gym-actions button:disabled{opacity:.45;cursor:default;}
+  #career-choice{border-color:#d3a747;}
+  #career-choice h2{margin:0 0 12px;color:#ffda62;font-size:21px;}
+  #career-choice p{margin:8px 0;}
+  #training-mode{display:block;margin:12px 0;}
+  #save-status{width:100%;max-width:840px;color:#a9bbcc;font:13px/1.4 system-ui;margin:6px 0;}
+  #market .gear{border-color:#aa8d50;background:#3a3021;}
+  #controls-bar{flex-wrap:wrap;}
+  #controls-bar .pad-group{flex:1;display:flex;justify-content:center;}
+  .ctrl-btn{flex:1;min-height:48px;padding:12px 8px;}
+  @media(max-width:540px){body{padding:8px;justify-content:flex-start}#controls-bar{gap:10px;padding:8px 0}#controls-bar .pad-group:last-child{flex-basis:100%}.ctrl-btn{font-size:9px;padding:12px 4px}#player-panel{grid-template-columns:repeat(2,1fr)!important}#gym-actions .actions{grid-template-columns:1fr}#career-panel{gap:6px 16px;font-size:14px}}
+
   #player-panel, #guide, #market {width:100%;max-width:840px;font:16px/1.5 system-ui,sans-serif;margin:8px 0;background:#151d2c;border:1px solid #394b63;border-radius:10px;padding:14px;}
-  #player-panel {display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  #player-panel {display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
   #player-panel strong {font-size:24px;color:#ffda62;display:block;}
   #player-panel meter {width:100%;height:18px;display:block;}
   #market .offers {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -183,7 +203,7 @@
   <div>CONURBANO FIGHTER II - 16-BIT EDITION</div>
   <div style="display:flex; gap:8px;">
     <button class="btn-retro" id="btn-audio">🔊 AUDIO: ON</button>
-    <button class="btn-retro" id="btn-subagents">🤖 SUBAGENTES</button>
+    <button class="btn-retro" id="btn-subagents">AYUDA</button>
   </div>
 </div>
 
@@ -194,22 +214,17 @@
   <p><b>Comida ($40)</b>: baja hasta 8 de fatiga y reduce el cansancio de los entrenamientos de esa semana. <b>Masaje ($60)</b>: baja hasta 30, sin consumir una sesión.</p>
   <p>El sábado solo podés prepararte o pelear. Cobrás un premio al terminar; si perdés, podés volver a intentar tras otra semana de preparación.</p>
   <p>Flechas: moverte · Z: piña · X: patada · C: cubrirte · V: especial con energía llena. Espacio: avanzar escenas. En celular usá los botones.</p>
-  <p>Se guarda al completar preparación. Si cerrás durante una pelea, retomás antes de pelear, en el mismo navegador y dirección.</p>
+  <p>Ganá fama en seis fechas argentinas, cerrá tu historia con Braian y viajá con Osvaldo a cuatro fechas de una liga ficticia de kickboxing. La fama desbloquea sponsors, equipos y un auto. El equipo suma ganancia y fatiga: podés usar la rutina básica.</p><p>Los viáticos y el descanso gratis permiten recuperarte aunque pierdas. Después de dos victorias aparece una oferta opcional: leé el riesgo antes de elegir.</p><p>Se guardan preparación, compras y decisiones. Si cerrás durante una pelea, retomás antes de pelear. Los premios ya cobrados no se repiten. Usá el mismo navegador y dirección.</p>
   <button id="guide-close">Entendido · cerrar guía</button>
 </details>
-<div id="player-panel" aria-label="Estado de Lautaro"></div>
-<section id="market" hidden aria-label="Tienda de recuperación">
-  <b>Preparación y recuperación</b>
-  <div class="offers"><button id="buy-food"></button><button id="buy-massage"></button></div>
-  <p id="market-message" role="status"></p>
-</section>
+<div id="career-panel" hidden></div>
 <div id="cabinet">
   <canvas id="game" width="640" height="400"></canvas>
   <div id="crt-overlay"></div>
 
   <div id="subagent-modal">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <span style="color:var(--gold); font-size:12px;">CONSEJO DE SUBAGENTES (MODO ADVERSARIAL)</span>
+      <span style="color:var(--gold); font-size:12px;">CONTROLES Y PLAN DE PELEA</span>
       <button class="btn-retro" id="btn-close-modal">CERRAR [X]</button>
     </div>
     <div id="subagent-content"></div>
@@ -229,6 +244,18 @@
   </div>
 </div>
 
+<div id="scene-controls" hidden><button class="btn-retro" id="scene-next">CONTINUAR / SALTAR ESCENA</button></div>
+<section id="career-choice" hidden aria-label="Decisión de carrera"></section>
+<section id="gym-actions" hidden aria-label="Plan del día"></section>
+<p id="save-status" role="status"></p>
+<div id="player-panel" aria-label="Estado de Lautaro"></div>
+<section id="market" hidden aria-label="Tienda de recuperación">
+  <b>Preparación y recuperación · comprar no consume el día</b>
+  <div class="offers"><button id="buy-food"></button><button id="buy-massage"></button></div>
+  <div id="equipment-offers" class="offers"></div>
+  <div id="car-offer" class="offers"></div>
+  <p id="market-message" role="status"></p>
+</section>
 <script>
 (() => {
   const canvas = document.getElementById('game');
@@ -332,7 +359,7 @@
   // Dibuja los retratos que aprobamos (Lautaro, Kevin, Don Osvaldo, El Braian y Henderson)
   // con píxeles grandes, dithering de los 90 y bordes marcados.
   const illustratedPortraits = {};
-  for (const [id, src] of Object.entries({"lautaro": "assets/portraits/lautaro.png", "osvaldo": "assets/portraits/osvaldo.png", "kevin": "assets/portraits/kevin.png", "braian": "assets/portraits/braian.png", "henderson": "assets/portraits/henderson.png"})) {
+  for (const [id, src] of Object.entries({"lautaro": "assets/portraits/lautaro.png", "osvaldo": "assets/portraits/osvaldo.png", "kevin": "assets/portraits/kevin.png", "braian": "assets/portraits/braian.png", "henderson": "assets/portraits/henderson.png", "tito": "assets/portraits/tito.png", "rulo": "assets/portraits/rulo.png", "nico": "assets/portraits/nico.png", "marcos": "assets/portraits/marcos.png", "sergio": "assets/portraits/sergio.png", "puma": "assets/portraits/puma.png", "silva": "assets/portraits/silva.png", "petrov": "assets/portraits/petrov.png", "lee": "assets/portraits/lee.png", "custodio": "assets/portraits/custodio.png"})) {
     const image = new Image();
     image.src = src;
     illustratedPortraits[id] = image;
@@ -340,17 +367,6 @@
   const portraitCache = {};
 
   function getPortraitCanvas(charId, bruised = false) {
-    if (['tito','rulo','nico'].includes(charId)) {
-      const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d');
-      const n=['tito','rulo','nico'].indexOf(charId);
-      g.fillStyle=['#533c27','#392b54','#194442'][n];g.fillRect(0,0,48,48);
-      g.fillStyle=['#a65b24','#7949aa','#238786'][n];g.fillRect(6,32,36,16);
-      g.fillStyle=['#b87954','#e6b48e','#b58867'][n];g.fillRect(13,9,22,27);
-      g.fillStyle='#241d1b';g.fillRect(12,6,24,8);if(n===1)g.fillRect(10,8,5,20);
-      g.fillRect(17,19,4,3);g.fillRect(28,19,4,3);g.fillRect(21,29,9,2);
-      return c;
-    }
-
     const illustrated = illustratedPortraits[charId];
     if (illustrated) {
       if (illustrated.complete && illustrated.naturalWidth) return illustrated;
@@ -549,6 +565,7 @@
     ARRIVAL: 'ARRIVAL',
     COACH: 'COACH',
     WEEK_RESULT: 'WEEK_RESULT',
+    CAREER_EVENT: 'CAREER_EVENT',
     TRAIN_TRAVEL: 'TRAIN_TRAVEL',
     BRIEF: 'BRIEF',
     GYM: 'GYM',
@@ -585,9 +602,15 @@
     }saveProgress();sfxSelect();
   }
   function recordResult(won,rival){
-    const prize=won?120+currentFightIndex*40:30;
-    playerStats.money+=prize;playerStats.fatigue=Math.min(70,playerStats.fatigue+15);
-    weekResult={won,rival,prize};sceneFrame=0;gameState=STATE.WEEK_RESULT;
+    if(gameState!==STATE.FIGHT)return;
+    const f=FIGHTS[currentFightIndex],optional=currentFightIndex===OPTIONAL_FIGHT_INDEX;
+    const sponsorPay=f.official&&playerStats.sponsor?50:0;
+    const prize=(optional?(won?420:0):won?f.purse:80)+sponsorPay;
+    playerStats.money+=prize;playerStats.fatigue=Math.min(70,playerStats.fatigue+(optional?22:15));
+    if(won&&f.official){playerStats.officialWins++;playerStats.fame+=f.international?3:2;}
+    const detected=optional&&Math.random()<(0.25+playerStats.suspicion/200);
+    if(detected){playerStats.sponsor=false;playerStats.fatigue=Math.max(0,playerStats.fatigue-25);week++;}
+    weekResult={won,rival,prize,index:currentFightIndex,optional,detected};sceneFrame=0;gameState=STATE.WEEK_RESULT;saveProgress();
   }
   let travelMode='enter';
   function finishTravel(){
@@ -605,71 +628,140 @@
     tecnica: 1,
     skillPoints: 0,
     trainsLeft: 3,
-    fatigue: 0, money: 60, goodFood: false
+    fatigue: 0, money: 60, goodFood: false,
+    fame:0, officialWins:0, sponsor:false, suspicion:0, equipment:{}, enhancedTraining:true, car:false, mafiaOffered:false, representative:false
   };
 
-  // Lista de combates desde Estación Madero hasta el cinturón de UFC
-  const FIGHTS = [
-    {
-      id: 'prologo_kevin',
-      name: 'EL KEVIN',
-      subtitle: 'EMBOSCADA EN ESTACIÓN MADERO',
-      portrait: 'kevin',
-      stage: 'madero',
-      isPrologue: true,
-      hp: 240,
-      atk: 18,
-      speed: 2.3,
-      color: '#1049a8',
-      capColor: '#d62424',
-      quotePlayer: '¡Dejá pasar loco, vengo cansado de cursar y laburar todo el día!',
-      quoteEnemy: '¡Entregá la mochila en Villa Madero gil, acá no pasás!'
-    },
-    ...[
-      ['tito', 'TITO', 'DEBUT AMATEUR', 190, 10, 1.8, '#a65b24'],
-      ['rulo', 'EL RULO', 'CIRCUITO BARRIAL', 265, 13, 2.05, '#7949aa'],
-      ['nico', 'NICO', 'FINAL REGIONAL', 340, 16, 2.35, '#238786']
-    ].map(([id, name, subtitle, hp, atk, speed, color]) => ({
-      id, name, subtitle, hp, atk, speed, color, portrait: id,
-      stage: 'gym_ring', isPrologue: false, capColor: null,
-      quotePlayer: 'Otra semana de trabajo. Vamos al ring.',
-      quoteEnemy: 'Acá se demuestra lo que entrenaste.'
-    })),
-    {
-      id: 'revancha_kevin', name: 'EL KEVIN',
-      subtitle: 'ÚLTIMA PELEA LOCAL - LA REVANCHA', portrait: 'kevin',
-      stage: 'gym_ring', isPrologue: false, hp: 420, atk: 20,
-      speed: 2.6, color: '#1049a8', capColor: '#d62424',
-      quotePlayer: 'Ahora sí, Kevin. Sin emboscadas.',
-      quoteEnemy: 'A ver si el gimnasio te sirvió, gil.'
-    },
-    {
-      id: 'ufc_champ',
-      name: '"EL DEMOLEDOR" HENDERSON',
-      subtitle: 'LAS VEGAS - FINAL POR EL TÍTULO UFC',
-      portrait: 'henderson',
-      stage: 'ufc_octagon',
-      isPrologue: false,
-      hp: 550,
-      atk: 25,
-      speed: 2.6,
-      color: '#b81d2c',
-      capColor: null,
-      quotePlayer: 'De Villa Madero y el Belgrano Sur directo a Las Vegas. ¡Vamos por el cinturón!',
-      quoteEnemy: 'Welcome to the Octagon, kid! You are in my house now!'
-    }
+  // Seis fechas argentinas, cierre barrial y cuatro fechas internacionales.
+  const fightData=[
+    ['tito','TITO','DEBUT BARRIAL',190,10,1.8,'basic'],
+    ['rulo','EL RULO','COPA DEL BARRIO',225,12,1.95,'pressure'],
+    ['nico','NICO','CLASIFICATORIA REGIONAL',275,14,2.1,'defensive'],
+    ['marcos','MARCOS','FINAL REGIONAL',320,15,2.2,'longreach'],
+    ['sergio','SERGIO','SEMIFINAL ARGENTINA',365,17,2.3,'pressure'],
+    ['puma','EL PUMA','CAMPEONATO ARGENTINO',415,19,2.4,'counter'],
+    ['braian','EL BRAIAN','CIERRE DEL BARRIO · REVANCHA',230,13,2.1,'counter'],
+    ['silva','SILVA','LIGA INTERNACIONAL · DEBUT',470,21,2.45,'pressure'],
+    ['petrov','PETROV','LIGA INTERNACIONAL · CUARTOS',525,23,2.5,'defensive'],
+    ['lee','LEE','LIGA INTERNACIONAL · SEMIFINAL',585,25,2.6,'longreach'],
+    ['henderson','HENDERSON','LIGA INTERNACIONAL · CINTURÓN',650,27,2.65,'balanced']
   ];
-
-  const saveKey='conurbano-fighter-save-v1';
+  const FIGHTS=[{
+    id:'prologo_kevin',name:'EL KEVIN',subtitle:'EMBOSCADA EN ESTACIÓN MADERO',portrait:'kevin',stage:'madero',isPrologue:true,hp:240,atk:18,speed:2.3,color:'#1049a8',capColor:'#d62424',style:'prologue',
+    quotePlayer:'Dejá pasar, loco. Vengo de cursar y laburar.',quoteEnemy:'¡Entregá la mochila!'
+  },...fightData.map(([id,name,subtitle,hp,atk,speed,style],i)=>({
+    id,name,subtitle,hp:Math.round(hp*(i===6?1:2.8)),atk,speed,style,portrait:id,
+    stage:i>=7?'ufc_octagon':'gym_ring',isPrologue:false,color:['#a65b24','#7949aa','#238786','#a93434'][i%4],capColor:null,
+    official:i!==6,international:i>=7,purse:i>=7?650+(i-7)*220:160+i*65,
+    quotePlayer:i===6?'Esta vez de frente, Braian. Y acá termina.':'Otra semana de trabajo. Vamos al ring.',quoteEnemy:'Acá se demuestra lo que entrenaste.'
+  }))];
+  const FINAL_FIGHT_INDEX=11;
+  const OPTIONAL_FIGHT_INDEX=FIGHTS.length;
+  FIGHTS.push({id:'encargo',name:'EL CUSTODIO',subtitle:'ENCARGO CLANDESTINO · OPCIONAL',portrait:'custodio',stage:'madero',isPrologue:false,hp:280,atk:15,speed:2.15,color:'#47375f',capColor:null,style:'counter',official:false,purse:420,quotePlayer:'Esto no estaba en el plan.',quoteEnemy:'Elegiste el lugar equivocado.'});
+  let careerEvent=null, optionalReturnIndex=null;
+  function trainingUpgrade(stat){const enhanced=playerStats.equipment[stat]&&playerStats.enhancedTraining;return {gain:enhanced?1:0,fatigue:enhanced?5:0};}
+  const EQUIPMENT={fuerza:{name:'Banco y discos',cost:250,fame:2},velocidad:{name:'Cuerda profesional',cost:220,fame:2},aguante:{name:'Bicicleta fija',cost:330,fame:4},tecnica:{name:'Manoplas y sesiones técnicas',cost:380,fame:4}};
+  function buyEquipment(stat){
+    const item=EQUIPMENT[stat];
+    if(gameState!==STATE.GYM||minigame.active||!item||playerStats.equipment[stat]||playerStats.fame<item.fame||playerStats.money<item.cost)return;
+    playerStats.money-=item.cost;playerStats.equipment[stat]=true;recoveryMessage=item.name+': +1 nivel por sesión; +5 fatiga. Permanente.';saveProgress();sfxSelect();
+  }
+  function signSponsor(){if(gameState!==STATE.GYM||minigame.active||playerStats.sponsor||playerStats.fame<8)return;playerStats.sponsor=true;recoveryMessage="Contrato de panadería: +$50 por fecha oficial.";saveProgress();sfxSelect();}
+  function buyCar(){
+    if(gameState!==STATE.GYM||minigame.active||playerStats.car||playerStats.fame<12||playerStats.money<1800)return;
+    playerStats.money-=1800;playerStats.car=true;recoveryMessage='Tu primer usado. Un logro de carrera: no cambia tus estadísticas.';saveProgress();sfxSelect();
+  }
+  function beginCareerEvent(kind){
+    const events={
+      mafia:{title:'UNA OFERTA FUERA DEL RING',lines:['Después de dos victorias te ofrecen un encargo clandestino.','Si ganás: $420. Si perdés: $0. Siempre sumás 22 de fatiga.','Riesgo explícito: 40% de ser descubierto. Sospecha +30.','Si te descubren: perdés el sponsor y pasás una semana suspendido.'],choices:['Aceptar el encargo','Rechazar · sponsor legal']},
+      offer:{title:'DEL BARRIO A LA LIGA INTERNACIONAL',lines:['Campeón argentino. La revancha con Braian quedó atrás.','Un representante ofrece cuatro fechas en una liga de kickboxing.','Piñas, patadas y guardia. Osvaldo sigue en tu esquina.','Las bolsas crecen. Entrená con un plan y cuidá tu recuperación.'],choices:['Firmar y viajar con Osvaldo']},
+      consequence:{title:'EL PRECIO DEL ENCARGO',lines:[],choices:['Volver a la carrera deportiva']}
+    };
+    careerEvent={kind,...events[kind]};gameState=STATE.CAREER_EVENT;saveProgress();
+  }
+  function chooseCareerEvent(choice){
+    if(gameState!==STATE.CAREER_EVENT||!careerEvent||!Number.isInteger(choice)||choice<0||choice>=careerEvent.choices.length)return;
+    if(careerEvent.kind==='mafia'){
+      playerStats.mafiaOffered=true;
+      if(choice===0){optionalReturnIndex=currentFightIndex;currentFightIndex=OPTIONAL_FIGHT_INDEX;playerStats.suspicion=Math.min(100,playerStats.suspicion+30);careerEvent=null;gameState=STATE.VS_SCREEN;vsTimer=210;startBGM('vs');saveProgress();return;}
+      playerStats.sponsor=true;playerStats.money+=80;recoveryMessage='Sponsor de la panadería: $80 al firmar y $50 por pelea oficial.';
+    }else if(careerEvent.kind==='offer'){playerStats.representative=true;}
+    careerEvent=null;gameState=STATE.BRIEF;saveProgress();startBGM('gym');sfxSelect();
+  }
+  function nextCareerWeek(){
+    const result=weekResult;
+    if(!result||gameState!==STATE.WEEK_RESULT)return;
+    weekResult=null;
+    if(result.optional){
+      currentFightIndex=optionalReturnIndex;optionalReturnIndex=null;
+      week++;playerStats.trainsLeft=3;playerStats.goodFood=false;
+      beginCareerEvent('consequence');
+      careerEvent.lines=result.detected?['Te descubrieron. Perdés el sponsor. Una semana suspendido.','Durante esa semana recuperaste 25 de fatiga. La fecha se reprogramó.','La sospecha queda registrada. La ruta deportiva sigue abierta.']:['El encargo terminó. Nadie te identificó esta vez.','No avanzaste en el circuito. La fatiga sí quedó.','Osvaldo: «La plata fácil te puede costar la carrera».'];
+      saveProgress();return;
+    }
+    if(result.won)currentFightIndex++;
+    if(result.won&&result.index===FINAL_FIGHT_INDEX){currentFightIndex=FINAL_FIGHT_INDEX;gameState=STATE.VICTORY_FINAL;saveProgress();return;}
+    week++;playerStats.trainsLeft=3;playerStats.skillPoints=0;
+    playerStats.fatigue=Math.max(0,playerStats.fatigue-15);playerStats.goodFood=false;recoveryMessage='';
+    if(result.won&&playerStats.officialWins===2&&!playerStats.mafiaOffered){beginCareerEvent('mafia');return;}
+    if(result.won&&result.index===7&&!playerStats.representative){beginCareerEvent('offer');return;}
+    gameState=STATE.BRIEF;saveProgress();startBGM('gym');sfxSelect();
+  }
+  const saveKey='conurbano-fighter-save-v2', legacySaveKey='conurbano-fighter-save-v1';
   let savedRun=null, saveAvailable=true;
-  try{const data=JSON.parse(localStorage.getItem(saveKey));if(data&&data.version===1&&Number.isInteger(data.index)&&data.index>=1&&data.index<FIGHTS.length&&data.stats&&['fuerza','velocidad','aguante','tecnica','fatigue','money','trainsLeft'].every(k=>Number.isFinite(data.stats[k]))&&data.stats.trainsLeft>=0&&data.stats.trainsLeft<=3)savedRun=data;}catch{saveAvailable=false;}
+  function validateRun(data){
+    if(!data||data.version!==2||!Number.isInteger(data.week)||data.week<1||data.week>10000||!data.stats)return null;
+    const index=FIGHTS.findIndex(f=>f.id===data.fightId);
+    const st=data.stats;
+    if(index<1||!['fuerza','velocidad','aguante','tecnica'].every(k=>Number.isInteger(st[k])&&st[k]>=1&&st[k]<=200)||
+      !Number.isInteger(st.trainsLeft)||st.trainsLeft<0||st.trainsLeft>3||
+      !Number.isFinite(st.fatigue)||st.fatigue<0||st.fatigue>70||!Number.isFinite(st.money)||st.money<0||st.money>10000000||
+      !Number.isInteger(st.fame)||st.fame<0||st.fame>1000||!Number.isInteger(st.officialWins)||st.officialWins<0||st.officialWins>10||
+      !Number.isFinite(st.suspicion)||st.suspicion<0||st.suspicion>100)return null;
+    if(![STATE.GYM,STATE.BRIEF,STATE.WEEK_RESULT,STATE.CAREER_EVENT,STATE.VICTORY_FINAL].includes(data.state))return null;
+    if(data.state===STATE.WEEK_RESULT&&(!data.result||data.result.index!==index||typeof data.result.won!=='boolean'||typeof data.result.optional!=='boolean'||typeof data.result.detected!=='boolean'||typeof data.result.rival!=='string'||!Number.isFinite(data.result.prize)||data.result.prize<0))return null;
+    if(data.state===STATE.CAREER_EVENT&&(!data.event||!['mafia','offer','consequence'].includes(data.event.kind)||typeof data.event.title!=='string'||!Array.isArray(data.event.lines)||!data.event.lines.every(l=>typeof l==='string')||!Array.isArray(data.event.choices)||!data.event.choices.length||!data.event.choices.every(l=>typeof l==='string')))return null;
+    if(index===OPTIONAL_FIGHT_INDEX&&(!Number.isInteger(data.optionalReturnIndex)||data.optionalReturnIndex<1||data.optionalReturnIndex>FINAL_FIGHT_INDEX))return null;
+    const equipment={};for(const k of Object.keys(EQUIPMENT))equipment[k]=st.equipment?.[k]===true;
+    return {...data,index,stats:{...st,equipment,goodFood:st.goodFood===true,sponsor:st.sponsor===true,car:st.car===true,mafiaOffered:st.mafiaOffered===true,representative:st.representative===true,enhancedTraining:st.enhancedTraining!==false}};
+  }
+  function migrateLegacy(data){
+    if(!data||data.version!==1||!data.stats||!Number.isInteger(data.index)||data.index<1||data.index>5)return null;
+    const ids=['prologo_kevin','tito','rulo','nico','braian','silva'];
+    const idx=FIGHTS.findIndex(f=>f.id===ids[data.index]);
+    const wins=idx>=8?6:idx===7?6:idx-1;
+    return validateRun({version:2,fightId:ids[data.index],week:data.week,state:data.stats.trainsLeft===3?STATE.BRIEF:STATE.GYM,stats:{...playerStats,...data.stats,fame:wins*2,officialWins:wins,mafiaOffered:wins>=2,representative:idx>=8},result:null,event:null,optionalReturnIndex:null});
+  }
+  try{const raw=localStorage.getItem(saveKey);savedRun=raw?validateRun(JSON.parse(raw)):migrateLegacy(JSON.parse(localStorage.getItem(legacySaveKey)));}catch(error){if(!(error instanceof SyntaxError))saveAvailable=false;}
   function saveProgress(){
-    if(currentFightIndex<1)return;
-    savedRun={version:1,index:currentFightIndex,week,stats:{...playerStats}};
+    if(currentFightIndex<1||currentFightIndex>=FIGHTS.length)return;
+    const safeState=[STATE.WEEK_RESULT,STATE.CAREER_EVENT,STATE.BRIEF,STATE.VICTORY_FINAL].includes(gameState)?gameState:STATE.GYM;
+    savedRun={version:2,fightId:FIGHTS[currentFightIndex].id,state:safeState,week,stats:{...playerStats,equipment:{...playerStats.equipment}},result:weekResult?{...weekResult}:null,event:careerEvent?JSON.parse(JSON.stringify(careerEvent)):null,optionalReturnIndex};
+    savedRun.index=currentFightIndex;
     try{localStorage.setItem(saveKey,JSON.stringify(savedRun));}catch{saveAvailable=false;}
   }
-  function clearProgress(){savedRun=null;try{localStorage.removeItem(saveKey);}catch{}}
-  const rivalStyles=['prologue','basic','pressure','defensive','counter','pressure'];
+  function resumeRun(){
+    Object.assign(playerStats,savedRun.stats);playerStats.equipment={...savedRun.stats.equipment};currentFightIndex=savedRun.index;week=savedRun.week;
+    weekResult=savedRun.result;careerEvent=savedRun.event;optionalReturnIndex=savedRun.optionalReturnIndex??null;gameState=savedRun.state;sceneFrame=0;
+    if(currentFightIndex===OPTIONAL_FIGHT_INDEX&&gameState===STATE.GYM){gameState=STATE.VS_SCREEN;vsTimer=210;}
+    startBGM('gym');
+  }
+  function clearProgress(){savedRun=null;try{localStorage.removeItem(saveKey);localStorage.removeItem(legacySaveKey);}catch{saveAvailable=false;}}
+  function resetRun(){
+    Object.assign(playerStats,{fuerza:1,velocidad:1,aguante:1,tecnica:1,skillPoints:0,trainsLeft:3,fatigue:0,money:60,goodFood:false,fame:0,officialWins:0,sponsor:false,suspicion:0,equipment:{},enhancedTraining:true,car:false,mafiaOffered:false,representative:false});
+    careerEvent=null;weekResult=null;optionalReturnIndex=null;currentFightIndex=0;week=1;sceneFrame=0;storyStep=0;fightShop=false;minigame.active=false;player=null;enemy=null;recoveryMessage='';clearProgress();
+  }
+  const rivalStyles=FIGHTS.map(f=>f.style);
+  function playerMetrics(){return {hp:Math.round((110+playerStats.aguante*18)*(1-playerStats.fatigue/350)),maxHp:110+playerStats.aguante*18,punch:Math.round(8+playerStats.fuerza*1),kick:Math.round(13+playerStats.fuerza*1),speed:(2.6+playerStats.velocidad*.45)*(1-playerStats.fatigue/470),special:Math.round(32+playerStats.fuerza*1+playerStats.tecnica*2)};}
+  const STYLE_ADVICE={
+    basic:['Va de frente y anuncia los golpes con tiempo.','Probá piña, guardia y patada; mirá el signo rojo.','Fuerza y técnica ayudan. Llegá con poca fatiga.'],
+    pressure:['Presiona y ataca seguido, pero baja el ritmo al cansarse.','Cubrite al principio; salí y aprovechá sus pausas.','Cuerda para moverte y aguante para resistir.'],
+    defensive:['Se cubre seguido: la piña hace menos daño en guardia.','La patada desgasta su defensa; la especial la atraviesa.','Entrená fuerza y técnica; no gastes todo en piñas.'],
+    counter:['Espera tus golpes; si repetís, responde rápido.','Alterná ataques y guardia. No regales golpes al aire.','Aguante y técnica para aguantar y romper el bloqueo.'],
+    longreach:['Tiene más alcance y trata de mantenerte lejos.','Entrá rápido, pegá y salí. Cubrite si no llegás.','La cuerda ayuda a acortar la distancia.'],
+    balanced:['Alterna avance, defensa y golpes: no tiene un único patrón.','Mezclá piña, patada y guardia. Usá la especial cargada.','Llegá recuperado y distribuí tus entrenamientos.']
+  };
+
 
   // ========================================================
   // 4. ENTIDADES DE COMBATE Y BALANCE DEL PRÓLOGO
@@ -714,7 +806,7 @@
       aiCooldown: 35,
       telegraph: 0,
       enraged: false,
-      hitsTaken: 0
+      hitsTaken: 0, attackCount:0
     };
 
     // En el prólogo, El Braian espera escondido para emboscar después de que intentes pelear
@@ -728,7 +820,7 @@
     specialFx=0;
     prologueHitsLanded = 0;
     floatingTexts = [];
-    fightTimer = 99;
+    fightTimer = 99;lastSecondTick=0;
     fightBanner = 'ROUND 1 - ¡A PELEAR!';
     fightBannerTimer = 90;
   }
@@ -751,16 +843,17 @@
   };
 
   function finishTraining(){
+    if(!minigame.active||playerStats.trainsLeft<=0)return;
     const st=minigame.statTarget, threshold=st==='tecnica'?5:st==='aguante'?10:st==='velocidad'?4:2;
-    const gain=minigame.hits>=threshold?2:1;
-    minigame.active=false;playerStats.trainsLeft--;playerStats[st]+=gain;
-    playerStats.fatigue=Math.min(70,playerStats.fatigue+(playerStats.goodFood?7:12));
+    const upgrade=trainingUpgrade(st), gain=(minigame.hits>=threshold?2:1)+upgrade.gain;
+    minigame.active=false;playerStats.trainsLeft--;playerStats[st]=Math.min(200,playerStats[st]+gain);
+    playerStats.fatigue=Math.min(70,playerStats.fatigue+(playerStats.goodFood?7:12)+upgrade.fatigue);
     recoveryMessage=`${st.toUpperCase()} +${gain} · Nivel ${playerStats[st]}`;
     saveProgress();travelMode='exit';sceneFrame=0;gameState=STATE.TRAIN_TRAVEL;
   }
 
   function startMinigame(statName) {
-    if (playerStats.trainsLeft <= 0) return;
+    if (gameState!==STATE.GYM || minigame.active || playerStats.trainsLeft<=0 || !["fuerza","velocidad","aguante","tecnica"].includes(statName)) return;
     if (playerStats.trainsLeft > 0) {
       minigame.active = true;
       minigame.cursor = 10;
@@ -768,7 +861,7 @@
       minigame.speed = 3.6;
       minigame.hits = 0;
       minigame.attempts = 0;
-      minigame.statTarget = statName;minigame.frames=0;minigame.jumped=false;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
+      minigame.statTarget = statName;minigame.lastInput=-60;minigame.frames=0;minigame.jumped=false;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
       sfxSelect();
     }
   }
@@ -781,12 +874,17 @@
   function handleActionPress(code) {
     initAudio();
 
+    if(gameState===STATE.CAREER_EVENT){
+      if(['Digit1','KeyZ'].includes(code))chooseCareerEvent(0);
+      else if(['Digit2','KeyX'].includes(code)&&careerEvent.choices.length>1)chooseCareerEvent(1);
+      else if(['Space','Enter'].includes(code)&&careerEvent.kind!=='mafia')chooseCareerEvent(0);
+      return;
+    }
     if (gameState === STATE.TITLE) {
       if(savedRun && code!=='KeyN'){
-        Object.assign(playerStats,savedRun.stats);currentFightIndex=savedRun.index;week=savedRun.week;
-        gameState=playerStats.trainsLeft===3?STATE.BRIEF:STATE.GYM;startBGM('gym');return;
+        resumeRun();return;
       }
-      clearProgress();
+      resetRun();
       gameState = STATE.INTRO_STORY;
       storyStep = 0;
       startBGM('madero');
@@ -822,28 +920,28 @@
       if (sceneFrame >= 240) { gameState = STATE.COACH; startBGM('gym'); }
       return;
     }
-    if(gameState===STATE.BRIEF){gameState=STATE.GYM;sfxSelect();return;}
-    if(gameState === STATE.TRAIN_TRAVEL){if(sceneFrame>=45)finishTravel();return;}
+    if(gameState===STATE.BRIEF){gameState=STATE.GYM;saveProgress();sfxSelect();return;}
+    if(gameState === STATE.TRAIN_TRAVEL){finishTravel();return;}
     if(gameState === STATE.WEEK_RESULT) {
       if(sceneFrame < 120) return;
-      if(weekResult.won) currentFightIndex++;
-      week++;playerStats.trainsLeft=3;playerStats.skillPoints=0;
-      playerStats.fatigue=Math.max(0,playerStats.fatigue-15);playerStats.goodFood=false;recoveryMessage='';
-      gameState=STATE.BRIEF;saveProgress();startBGM('gym');sfxSelect();return;
+      nextCareerWeek();return;
     }
     if (gameState === STATE.COACH) {
       playerStats.skillPoints = 0; playerStats.trainsLeft = 3;
       currentFightIndex = 1; week = 1; gameState = STATE.BRIEF;
-      sfxSelect(); return;
+      saveProgress();sfxSelect(); return;
     }
     if (gameState === STATE.GYM && minigame.active) {
       if(!['KeyZ','KeyX','Space'].includes(code))return;
+      if(minigame.frames-minigame.lastInput<10)return;minigame.lastInput=minigame.frames;
       if(minigame.statTarget==='tecnica'){
         const expected=minigame.sequence[minigame.attempts];
         if(code===expected || code==='Space'&&expected==='KeyZ'){minigame.hits++;sfxParry();}else sfxWeakHit();
         minigame.attempts++;if(minigame.attempts>=6)finishTraining();
       }else if(minigame.statTarget==='aguante'){
-        minigame.hits++;sfxHit();if(minigame.hits>=12)finishTraining();
+        const phase=minigame.frames%30;minigame.attempts++;
+        if(phase>=8&&phase<=22){minigame.hits++;sfxHit();}else sfxWeakHit();
+        if(minigame.hits>=12)finishTraining();
       }else if(minigame.statTarget==='velocidad'){
         if(!minigame.jumped){minigame.jumped=true;if(minigame.cursor>=38&&minigame.cursor<=62){minigame.hits++;sfxParry();}else sfxWeakHit();}
       }else{
@@ -855,12 +953,7 @@
     }
 
     if (gameState === STATE.VICTORY_FINAL) {
-      // Reiniciar juego
-      playerStats.fuerza = 1;
-      playerStats.velocidad = 1;
-      playerStats.aguante = 1;
-      playerStats.tecnica = 1;
-      playerStats.fatigue=0;playerStats.money=60;playerStats.goodFood=false;playerStats.trainsLeft=3;week=1;recoveryMessage='';
+      resetRun();
       gameState = STATE.TITLE;
       sfxSelect();
       return;
@@ -887,8 +980,12 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    if(['ArrowLeft','ArrowRight','KeyC','KeyZ','KeyX','KeyV','Space'].includes(e.code))e.preventDefault();
+    if(e.repeat)return;
+    if(['ArrowLeft','ArrowRight','KeyZ','KeyX','KeyC','KeyV','Space'].includes(e.code)&&!['BUTTON','SUMMARY','INPUT'].includes(e.target?.tagName))e.preventDefault();
+    if((['BUTTON','SUMMARY'].includes(e.target?.tagName)&&['Space','Enter'].includes(e.code))||['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;
     keys[e.code] = true;
-    if (['KeyZ', 'KeyX', 'KeyV', 'Space', 'Enter', 'KeyN'].includes(e.code)) {
+    if (['KeyZ', 'KeyX', 'KeyV', 'Space', 'Enter', 'KeyN', 'Digit1', 'Digit2'].includes(e.code)) {
       handleActionPress(e.code);
     }
   });
@@ -897,9 +994,14 @@
     keys[e.code] = false;
   });
 
+  window.addEventListener('blur',()=>{for(const k of Object.keys(keys))keys[k]=false;});
+  document.addEventListener('visibilitychange',()=>{for(const k of Object.keys(keys))keys[k]=false;});
+
   // Botones táctiles inferiores
   document.querySelectorAll('.ctrl-btn').forEach(btn => {
     const k = btn.dataset.key;
+    btn.addEventListener('keydown',e=>{if(['Space','Enter'].includes(e.code)&&!e.repeat){e.preventDefault();keys[k]=true;handleActionPress(k);}});
+    btn.addEventListener('keyup',e=>{if(['Space','Enter'].includes(e.code))keys[k]=false;});
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       keys[k] = true;
@@ -910,6 +1012,7 @@
       keys[k] = false;
     });
     btn.addEventListener('pointerleave', () => { keys[k] = false; });
+    btn.addEventListener('pointercancel',()=>{keys[k]=false;});
   });
 
   // Clics directos en el Canvas (para el Gimnasio y pantallas de historia)
@@ -919,6 +1022,7 @@
     const mx = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const my = ((e.clientY - rect.top) / rect.height) * canvas.height;
 
+    if(gameState===STATE.CAREER_EVENT){if(careerEvent.kind!=='mafia')handleActionPress('Space');return;}
     if(gameState===STATE.TITLE&&savedRun&&my>=357){handleActionPress('KeyN');return;}
     if (gameState === STATE.GYM) {
       if (minigame.active) {
@@ -997,15 +1101,15 @@
 
       // Combates normales del Torneo y UFC
       let baseDmg = type === 'punch' ? 8 : (type === 'kick' ? 13 : 32);
-      let totalDmg = Math.round(baseDmg + playerStats.fuerza * 1.8 + (type === 'special' ? playerStats.tecnica * 3 : 0));
+      let totalDmg = Math.round(baseDmg + playerStats.fuerza * 1 + (type === 'special' ? playerStats.tecnica * 2 : 0));
 
       // Una secuencia repetida de golpes provoca guardia y contraataque.
-      const style=rivalStyles[currentFightIndex];
+      const style=f.style||'balanced';
       enemy.hitsTaken++;
-      if(type !== 'special' && ((enemy.state==='block' && type==='punch') || enemy.hitsTaken % (style==='defensive'?3:style==='counter'?4:5) === 0)) {
-        totalDmg = Math.max(2, Math.round(totalDmg*.25));
+      if(type !== 'special' && (enemy.state==='block' || (style==='counter'&&enemy.hitsTaken%4===0))) {
+        totalDmg = Math.max(2, Math.round(totalDmg*(type==='kick'?.55:.22)));
         enemy.hp = Math.max(0,enemy.hp-totalDmg);
-        enemy.state='block';enemy.stateTimer=8;enemy.telegraph=style==='counter'?8:14;
+        enemy.state='block';enemy.stateTimer=8;enemy.telegraph=style==='counter'?30:18;
         enemy.aiCooldown=12;
         player.energy=Math.min(100,player.energy+18);
         addFloatingText(enemy.x,enemy.y-90,'¡GUARDIA!', '#66dd88');sfxBlock();return;
@@ -1013,8 +1117,8 @@
 
       // Si el enemigo tenía cartel de alerta (!), metés ANTICIPO crítico
       if (enemy.telegraph > 0) {
-        totalDmg = Math.round(totalDmg * 1.45);
-        enemy.telegraph = 0;
+        totalDmg = Math.round(totalDmg * (type==='special'?1.45:1.15));
+        if(type==='special'){enemy.telegraph=0;enemy.aiCooldown=Math.max(enemy.aiCooldown,25);}
         addFloatingText(enemy.x, enemy.y - 95, `¡ANTICIPO CRÍTICO! -${totalDmg}`, '#00ffcc');
         sfxParry();
       } else {
@@ -1023,19 +1127,19 @@
       }
 
       enemy.hp = Math.max(0, enemy.hp - totalDmg);
-      enemy.state = 'hit';
-      enemy.stateTimer = 7;
+      if(enemy.telegraph===0){enemy.state='hit';enemy.stateTimer=type==='special'?20:7;}
       enemy.vx = player.dir * (type === 'kick' ? 6 : 3.5);
       if(type !== 'special') player.energy = Math.min(100, player.energy + 22);
       if(player.energy === 100 && type !== 'special'){fightBanner='¡ESPECIAL LISTA! APRETÁ V';fightBannerTimer=60;}
       player.combo++;
-    }
+    } else if(type!=='special'&&!f.isPrologue){player.energy=Math.min(100,player.energy+4);}
   }
 
   // ========================================================
   // 8. LOOP DE ACTUALIZACIÓN (UPDATE)
   // ========================================================
   function update() {
+    if(document.hidden)return;
     if(gameState===STATE.TRAIN_TRAVEL){sceneFrame++;if(sceneFrame>=110)finishTravel();return;}
     if(gameState === STATE.WEEK_RESULT){sceneFrame++;return;}
     if (gameState === STATE.ARRIVAL) { sceneFrame++; if (sceneFrame >= 330) { gameState = STATE.COACH; startBGM('gym'); } return; }
@@ -1051,7 +1155,7 @@
 
     if (gameState === STATE.GYM && minigame.active) {
       minigame.frames++;
-      if(minigame.statTarget==='aguante'){if(minigame.frames>=300)finishTraining();return;}
+      if(minigame.statTarget==='aguante'){if(minigame.frames>=420)finishTraining();return;}
       if(minigame.statTarget==='tecnica')return;
       minigame.cursor+=minigame.dir*minigame.speed;
       if(minigame.statTarget==='velocidad'){
@@ -1063,6 +1167,7 @@
     if (gameState !== STATE.FIGHT) return;
 
     const f = FIGHTS[currentFightIndex];
+    if(player.state==='ko'||enemy.state==='ko')return;
 
     if(specialFx>0)specialFx--;
     // Reloj de combate
@@ -1072,6 +1177,11 @@
       lastSecondTick = 0;
     }
 
+    if(fightTimer===0 && player.hp>0 && enemy.hp>0){
+      fightBanner='TIEMPO · DECISIÓN POR VIDA RESTANTE';fightBannerTimer=120;
+      if(!f.isPrologue && player.hp/player.maxHp>enemy.hp/enemy.maxHp)enemy.hp=0;
+      else player.hp=0;
+    }
     if (fightBannerTimer > 0) fightBannerTimer--;
 
     // Textos flotantes
@@ -1126,7 +1236,7 @@
         enemy.state = 'attack';
         enemy.stateTimer = 18;
         const dist = Math.abs(enemy.x - player.x);
-        if (dist < 82) {
+        if (dist < (f.style==='longreach'?112:82)) {
           // En el prólogo: al principio te deja pegarle un par de veces, y cuando se enoja te saca de a 28-35 HP (te gana en ~3 o 4 golpes, no de una)
           let dmg = f.isPrologue ? (enemy.enraged ? 32 : 22) : f.atk;
 
@@ -1149,27 +1259,23 @@
       }
     }
 
-    // Movimiento IA
-    if (enemy.state === 'idle' && enemy.telegraph === 0 && player.hp > 0 && enemy.hp > 0) {
-      const dist = enemy.x - player.x;
-      enemy.dir = dist >= 0 ? -1 : 1;
-
-      // En el prólogo, los primeros segundos Kevin se confía para que puedas meterle tus primeros 2 o 3 golpes
-      if (f.isPrologue && prologueHitsLanded >= 2) {
-        enemy.enraged = true;
-      }
-
-      if (Math.abs(dist) > 68) {
-        const spd = f.isPrologue && !enemy.enraged ? 1.5 : f.speed;
-        enemy.x -= Math.sign(dist) * spd;
-      } else {
-        const style=rivalStyles[currentFightIndex];
-        if(style==='defensive' && enemy.aiCooldown>18){enemy.state='block';enemy.stateTimer=10;enemy.aiCooldown-=10;}
-        if(style==='counter' && player.state==='idle' && enemy.aiCooldown>12){enemy.aiCooldown-=.3;}else enemy.aiCooldown--;
-        const threshold = (f.isPrologue && !enemy.enraged) ? 42 : 18;
-        if (enemy.aiCooldown <= 0) {
-          enemy.telegraph = 14; // Señal (!) antes de pegar
-          enemy.aiCooldown = Math.max(22, 46 - currentFightIndex * 5)+(rivalStyles[currentFightIndex]==='pressure'?-5:rivalStyles[currentFightIndex]==='defensive'?12:0);
+    // Each rival's announced style drives spacing, guard and attack timing.
+    if(enemy.state==='idle' && enemy.telegraph===0 && player.hp>0 && enemy.hp>0){
+      const dist=enemy.x-player.x, gap=Math.abs(dist), style=f.style||'balanced';
+      enemy.dir=dist>=0?-1:1;
+      if(f.isPrologue&&prologueHitsLanded>=2)enemy.enraged=true;
+      const spacing=style==='longreach'?94:62;
+      if(gap>spacing){enemy.x-=Math.sign(dist)*(f.isPrologue&&!enemy.enraged?1.5:f.speed);}
+      else if(style==='longreach'&&gap<76){enemy.x+=Math.sign(dist)*f.speed*.65;}
+      enemy.x=Math.max(45,Math.min(595,enemy.x));
+      if(gap<=spacing+12){
+        enemy.aiCooldown--;
+        if((style==='defensive'||style==='balanced'&&enemy.attackCount%2===1)&&enemy.aiCooldown>20){enemy.state='block';enemy.stateTimer=14;enemy.aiCooldown-=8;}
+        if(style==='counter'&&['punch','kick'].includes(player.state))enemy.aiCooldown=Math.min(enemy.aiCooldown,8);
+        if(enemy.aiCooldown<=0){
+          enemy.attackCount++;
+          enemy.telegraph=f.isPrologue?18:style==='pressure'?14:style==='counter'?24:22;
+          enemy.aiCooldown=style==='pressure'?(enemy.attackCount%3===0?75:32):style==='defensive'?55:style==='counter'?48:44;
         }
       }
     }
@@ -1212,12 +1318,8 @@
       setTimeout(() => {
         if (f.isPrologue) {
           currentFightIndex = 1; gameState = STATE.POST_ROBO; storyStep = 0;
-        } else if (currentFightIndex >= FIGHTS.length - 1) {
-          clearProgress();gameState = STATE.VICTORY_FINAL;
         } else {
-          currentFightIndex++;
-          playerStats.skillPoints = 0;
-          recordResult(false,f.name);
+          recordResult(true,f.name);
         }
       }, 1900);
     }
@@ -1286,7 +1388,7 @@
       ctx.fillStyle='#3e413c';ctx.fillRect(0,140,640,160);
       ctx.fillStyle='#453d36';ctx.fillRect(0,300,640,100);
       ctx.fillStyle='#c6b57d';ctx.fillRect(140,25,360,43);
-      ctx.fillStyle='#25251f';ctx.textAlign='center';ctx.font='18px monospace';ctx.fillText('BOXEO MADERO · DON OSVALDO',320,52);
+      ctx.fillStyle='#25251f';ctx.textAlign='center';ctx.font='18px monospace';ctx.fillText('GIMNASIO MADERO · DON OSVALDO',320,52);
       ctx.fillStyle='#222';ctx.fillRect(80,68,4,55);ctx.fillStyle='#9c3430';ctx.fillRect(60,123,45,110);
       ctx.fillStyle='#141619';ctx.fillRect(440,225,145,9);ctx.fillRect(465,207,13,45);ctx.fillRect(540,207,13,45);
       ctx.strokeStyle='#aba28b';ctx.lineWidth=3;ctx.strokeRect(330,90,200,100);
@@ -1317,7 +1419,7 @@
       ctx.lineWidth = 2;
       ctx.strokeRect(215, 92, 210, 32);
       ctx.fillStyle = '#ffffff';
-      ctx.font = '11px "Press Start 2P"';
+      ctx.font = '11px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('VILLA MADERO', 320, 113);
 
@@ -1354,7 +1456,7 @@
       ctx.strokeStyle = '#ffcc00';
       ctx.strokeRect(170, 80, 300, 34);
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '11px "Press Start 2P"';
+      ctx.font = '11px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('CLUB SOCIAL MADERO', 320, 102);
 
@@ -1393,9 +1495,9 @@
       ctx.fillStyle = '#111';
       ctx.fillRect(0, 132, 640, 12);
       ctx.fillStyle = '#d4af37';
-      ctx.font = '11px "Press Start 2P"';
+      ctx.font = '11px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('UFC WORLD CHAMPIONSHIP - LAS VEGAS', 320, 120);
+      ctx.fillText('LIGA MUNDIAL DE KICKBOXING - LAS VEGAS', 320, 120);
 
       // Lona del octágono
       ctx.fillStyle = '#1e2430';
@@ -1441,6 +1543,7 @@
     ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(-15,-86,5,26);
     ctx.fillStyle=light;ctx.fillRect(18,-83,6,8);ctx.fillStyle='#88513c';ctx.fillRect(22,-75,3,7);ctx.fillRect(-8,-52,20,3);
     ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(10,-82,5,26);ctx.fillRect(-5,-67,14,3);
+    if(f.coach){ctx.fillStyle='#ece8da';ctx.fillRect(-17,-96,8,42);ctx.fillRect(9,-94,8,41);ctx.fillStyle='#c6c2b6';ctx.fillRect(-16,-73,5,2);ctx.fillRect(10,-68,6,2);}
     if(f.hasBackpack){poly([[-23,-90],[-33,-85],[-31,-53],[-20,-50]],'#86623a');}
     // Profile with jaw, nose, ear and hair.
     ctx.save();if(seated){ctx.translate(0,-99);ctx.rotate(.42);ctx.translate(0,99);}
@@ -1469,6 +1572,15 @@
   function draw() {
     ctx.clearRect(0, 0, 640, 400);
 
+    if(gameState===STATE.CAREER_EVENT){
+      drawStageBackground(careerEvent.kind==='mafia'?'gym_outside':'gym_interior');
+      ctx.fillStyle='rgba(6,11,20,.82)';ctx.fillRect(0,0,640,400);
+      ctx.drawImage(getPortraitCanvas(careerEvent.kind==='mafia'?'custodio':'osvaldo'),245,70,150,150);
+      ctx.textAlign='center';ctx.font='bold 19px monospace';ctx.fillStyle='#ffda62';ctx.fillText(careerEvent.title.toUpperCase(),320,48);
+      ctx.font='14px monospace';ctx.fillStyle='#fff';ctx.fillText('La próxima decisión cambia tu carrera.',320,257);
+      ctx.fillStyle='#7dd3fc';ctx.fillText('Leé la propuesta y elegí debajo de la pantalla.',320,284);
+      ctx.font='12px monospace';ctx.fillText(careerEvent.choices.length===2?'1 / Z: aceptar · 2 / X: rechazar':'ESPACIO: continuar',320,331);return;
+    }
     // --- 1. PANTALLA DE TÍTULO ---
     if (gameState === STATE.TITLE) {
       drawStageBackground('gym_outside');
@@ -1476,7 +1588,7 @@
       ctx.fillStyle='#dba748';ctx.fillRect(45,38,550,4);
       ctx.textAlign='center';ctx.font='bold 38px monospace';ctx.fillStyle='#0b101b';ctx.fillText('CONURBANO',323,99);ctx.fillText('FIGHTER',323,141);
       ctx.fillStyle='#f2d38b';ctx.fillText('CONURBANO',320,96);ctx.fillStyle='#ed6a47';ctx.fillText('FIGHTER',320,138);
-      ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL OCTÁGONO',320,163);
+      ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL MUNDO',320,163);
       drawFighterSprite({x:320,y:316,dir:1,state:'idle'},true,'#4a525d',null);
       ctx.fillStyle='rgba(6,11,20,.92)';ctx.fillRect(40,325,560,57);
       ctx.strokeStyle='#dba748';ctx.strokeRect(40,325,560,57);
@@ -1505,11 +1617,11 @@
 
       ctx.textAlign = 'left';
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '11px "Press Start 2P"';
+      ctx.font = '11px monospace';
       ctx.fillText(storyStep === 0 ? 'LAUTARO (23:15 HS - ESTACIÓN MADERO):' : 'EL KEVIN (CORTÁNDOTE EL PASO):', 152, 282);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       if (storyStep === 0) {
         ctx.fillText('"Recién me bajo del Belgrano Sur después de', 152, 310);
         ctx.fillText('cursar y laburar todo el día. Solo quiero', 152, 330);
@@ -1555,13 +1667,13 @@
       // Nombres grandes pixelados abajo de cada retrato
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.font = '18px "Press Start 2P"';
+      ctx.font = '18px monospace';
       ctx.fillText('LAUTARO', 140, 258);
       ctx.fillText(f.name.split(' ')[0] === '"EL' ? 'HENDERSON' : f.name, 500, 258);
 
       // Logo VS en el centro
       ctx.fillStyle = '#e62e2e';
-      ctx.font = '28px "Press Start 2P"';
+      ctx.font = '28px monospace';
       ctx.fillText('VS', 320, 155);
       ctx.strokeStyle = '#ffcc00';
       ctx.lineWidth = 2;
@@ -1573,13 +1685,13 @@
       ctx.strokeStyle = '#ffcc00';
       ctx.strokeRect(30, 278, 580, 102);
 
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       ctx.fillStyle = '#7dd3fc';
       ctx.fillText(f.quotePlayer, 320, 312);
       ctx.fillStyle = '#fca5a5';
       ctx.fillText(f.quoteEnemy, 320, 345);
       ctx.fillStyle = '#aaa';
-      ctx.font = '8px "Press Start 2P"';
+      ctx.font = '8px monospace';
       ctx.fillText(f.subtitle, 320, 368);
       ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText(`LAUTARO · FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,394);
       return;
@@ -1636,7 +1748,7 @@
       ctx.fillRect(68, 40, 1.4 * player.energy, 8);
 
       // Nombres en HUD
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'left';
       ctx.fillText('LAUTARO', 68, 59);
@@ -1650,7 +1762,7 @@
       ctx.strokeRect(292, 10, 56, 44);
       ctx.fillStyle = '#ffcc00';
       ctx.textAlign = 'center';
-      ctx.font = '16px "Press Start 2P"';
+      ctx.font = '16px monospace';
       ctx.fillText(String(fightTimer).padStart(2, '0'), 320, 38);
 
       // Luchadores
@@ -1670,7 +1782,7 @@
       }
 
       // Textos de daño flotantes
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       ctx.textAlign = 'center';
       floatingTexts.forEach(t => {
         ctx.fillStyle = t.color;
@@ -1684,7 +1796,7 @@
         ctx.strokeStyle = '#ffcc00';
         ctx.strokeRect(40, 155, 560, 42);
         ctx.fillStyle = '#ffcc00';
-        ctx.font = '11px "Press Start 2P"';
+        ctx.font = '11px monospace';
         ctx.fillText(fightBanner, 320, 181);
       }
       return;
@@ -1704,27 +1816,21 @@
       ctx.drawImage(getPortraitCanvas(rival.portrait),510,68,80,80);
       ctx.fillStyle='#e2e7ca';ctx.textAlign='left';ctx.font='14px monospace';
       ctx.fillText(`SÁBADO: ${rival.name}`,195,72);
-      ctx.font='12px monospace';
-      const rows=[['RESISTENCIA',rival.hp/550],['PEGADA',rival.atk/25],['VELOCIDAD',rival.speed/2.6]];
-      rows.forEach(([label,value],i)=>{const y=99+i*25;ctx.fillStyle='#e2e7ca';ctx.fillText(label,195,y);ctx.strokeStyle='#aebc9c';ctx.strokeRect(298,y-10,165,10);ctx.fillStyle='#c7d3b0';ctx.fillRect(299,y-9,163*value,8);});
+      ctx.font='11px monospace';
+      const rows=[['RESISTENCIA',Math.min(1,rival.hp/1820)],['PEGADA',Math.min(1,rival.atk/27)],['VELOCIDAD',Math.min(1,rival.speed/2.65)]];
+      rows.forEach(([label,value],i)=>{const y=99+i*25;ctx.fillStyle='#e2e7ca';ctx.fillText(label+(i===0?' '+rival.hp:i===1?' '+rival.atk:' '+rival.speed.toFixed(2)),195,y);ctx.strokeStyle='#aebc9c';ctx.strokeRect(320,y-10,143,10);ctx.fillStyle='#c7d3b0';ctx.fillRect(321,y-9,141*value,8);});
       ctx.fillStyle='#b3aa85';ctx.fillRect(305,179,50,3);ctx.fillStyle='#eee';ctx.fillRect(320,177,12,3);
-      drawFighterSprite({x:120,y:284,dir:1,state:'idle',coach:true},false,'#d8c9a3',null);
+      drawFighterSprite({x:120,y:284,dir:1,state:'idle',coach:true},false,'#222a32',null);
       const pointing=Date.now()/1500%3;
       const targetY=96+Math.floor(pointing)*25;
       ctx.strokeStyle='#d3a27d';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(142,198);ctx.lineTo(166,185);ctx.lineTo(181,177);ctx.stroke();
-      ctx.strokeStyle='#ccb886';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(181,177);ctx.lineTo(293,targetY);ctx.stroke();
+      ctx.strokeStyle='#ccb886';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(181,177);ctx.lineTo(319,targetY);ctx.stroke();
 
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='13px monospace';
       ctx.fillText(`LUNES · SEMANA ${week} · CUARTITO DEL GIMNASIO`,385,24);
 
       ctx.fillStyle='#141828';ctx.fillRect(25,290,590,98);ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,290,590,98);
-      const advice=[
-        ['Tito pelea simple: avanza, avisa el golpe y deja huecos.', 'Igual aguanta golpes: trabajá fuerza y técnica.', 'No te quemes entrenando. Llegá descansado al debut.'],
-        ['El Rulo presiona: avanza y ataca con más frecuencia.', 'Cuerda para moverte y aguante para bancar sus golpes.', 'Alterná golpes y guardia: repetir ataques le facilita cubrirse.'],
-        ['Nico se cubre: probá patadas y especial para abrirlo.', 'Mezclá fuerza y aguante. No descuides la recuperación.', 'Guardá la especial para abrir su defensa.'],
-        ['Kevin espera: si repetís golpes te contragolpea rápido.', 'Necesitás aguante y técnica para una especial fuerte.', 'Entrá con cabeza fría: no hace falta atacar todo el tiempo.'],
-        ['Henderson presiona fuerte y aguanta más que los demás.', 'Llegá recuperado; fuerza y aguante te van a servir.', 'Usá guardia y especial. No regales vida por apurarte.']
-      ][currentFightIndex-1];
+      const advice=STYLE_ADVICE[rival.style]||STYLE_ADVICE.basic;
       ctx.fillStyle='#fff';ctx.font='12px monospace';ctx.fillText(`EL SÁBADO: ${rival.name}`,320,308);
       advice.forEach((line,i)=>ctx.fillText(line,320,328+i*15));
       ctx.fillStyle='#2ee653';ctx.font='13px monospace';ctx.fillText('[TOCÁ O ESPACIO · ELEGIR EL PLAN]',320,379);return;
@@ -1740,14 +1846,10 @@
       ctx.fillText(weekResult.won?'¡GANASTE LA PELEA!':'ESTA VEZ NO ALCANZÓ',340,44);
       ctx.fillStyle='#fff';ctx.font='13px monospace';ctx.fillText(`SÁBADO · SEMANA ${week} · VS ${weekResult.rival}`,340,68);
       ctx.fillStyle='#141828';ctx.fillRect(25,303,590,85);ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,303,590,85);
-      const remarks=[
-        'Bien, pibe. Ganaste la primera. Ahora empieza el trabajo.',
-        'Ya no sos el que entró por esa puerta. Pero falta camino.',
-        'Ganaste la regional. La próxima es con Kevin. Sin bronca.',
-        'La revancha quedó atrás. Ahora vamos por la UFC.'
-      ];
+      const resultFight=FIGHTS[weekResult.index];
+      const remark=weekResult.optional?'Este encuentro no suma victorias oficiales.':!weekResult.won?'Perder enseña. Cobraste viáticos; podés prepararte y volver.':weekResult.index===7?'Recuperaste la mochila. El barrio quedó atrás.':weekResult.index===6?'Campeón argentino. Queda cerrar la historia con Braian.':weekResult.index===FINAL_FIGHT_INDEX?'Lo logramos, pibe. Del barrio al cinturón mundial.':weekResult.index===2?'Dos victorias. Empiezan a llegar ofertas.':'Otra fecha ganada. Osvaldo ya piensa en el siguiente rival.';
       ctx.fillStyle='#fff';ctx.font='13px monospace';
-      ctx.fillText(weekResult.won?remarks[Math.min(3,currentFightIndex-1)]:'Perder también enseña. El lunes corregimos lo que faltó.',320,328);
+      ctx.fillText(remark,320,328);
       ctx.fillStyle='#7dd3fc';ctx.fillText(`PREMIO: $${weekResult.prize} · DINERO: $${playerStats.money} · FATIGA: ${playerStats.fatigue}/70`,320,348);
       ctx.fillStyle='#2ee653';ctx.fillText(sceneFrame<120?'El ruido del ring se apaga...':`[CONTINUAR] LUNES · SEMANA ${week+1}`,320,376);
       return;
@@ -1760,6 +1862,7 @@
         const travel=gameState===STATE.TRAIN_TRAVEL, night=travel&&travelMode==='exit';
         ctx.fillStyle='rgba(18,33,32,.85)';ctx.fillRect(12,12,222,27);
         ctx.fillStyle='#e5dfc8';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('VILLA MADERO · LA MATANZA',123,30);
+        if(playerStats.car){ctx.fillStyle='#c28a38';ctx.fillRect(28,265,108,24);ctx.fillRect(53,251,57,20);ctx.fillStyle='#a9cbd7';ctx.fillRect(60,256,40,11);ctx.fillStyle='#171a24';ctx.beginPath();ctx.arc(50,291,11,0,Math.PI*2);ctx.arc(114,291,11,0,Math.PI*2);ctx.fill();}
         const x = travel ? (night ? 488-sceneFrame*3.6 : Math.min(488,80+sceneFrame*4)) : Math.min(488,55+sceneFrame*1.65);
         if(sceneFrame < 270) drawFighterSprite({x,y:310,dir:night?-1:1,state:sceneFrame%24<12?'walk':'idle',hasBackpack:false},true,'#4a525d',null);
         ctx.fillStyle = '#111';ctx.fillRect(0,345,640,55);
@@ -1774,13 +1877,13 @@
         ctx.fillStyle='#141828';ctx.fillRect(25,300,590,90);
         ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,300,590,90);
         ctx.textAlign='center';ctx.font='16px monospace';ctx.fillStyle='#ffcc00';
-        ctx.font='13px monospace';ctx.fillText(coach?'DON OSVALDO · BOXEO MADERO':'LAUTARO · EN SU HABITACIÓN, DESPUÉS DEL ROBO',320,318);
+        ctx.font='13px monospace';ctx.fillText(coach?'DON OSVALDO · GIMNASIO MADERO':'LAUTARO · EN SU HABITACIÓN, DESPUÉS DEL ROBO',320,318);
         ctx.fillStyle='#fff';ctx.font='12px monospace';
         const lines=coach?[
           '¿Querés pelear? Primero tenés que entrenar, pibe.',
           'Lunes, miércoles y viernes: tres sesiones.',
           'Pesas, bolsa, cuerda y técnica. El sábado, pelea.',
-          'Primero amateurs. Kevin va a tener que esperar.'
+          'Primero el circuito. Braian va a tener que esperar.'
         ]:storyStep===0?[
           'Uh... me robaron todo. ¿Ahora qué hago?',
           'Pegar por bronca no alcanza. Me falta entrenamiento.'
@@ -1829,11 +1932,11 @@
 
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '13px "Press Start 2P"';
+      ctx.font = '13px monospace';
       ctx.fillText('GIMNASIO DE DON OSVALDO', 320, 36);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       ctx.fillText(`PRÓXIMA PELEA: VS ${nextFight.name}`, 320, 58);
 
       ctx.fillStyle = '#2ee653';
@@ -1843,7 +1946,7 @@
 
 
       ctx.fillStyle = '#aaa';
-      ctx.font = '8px "Press Start 2P"';
+      ctx.font = '8px monospace';
       ctx.fillText(playerStats.trainsLeft ? `${['LUNES', 'MIÉRCOLES', 'VIERNES'][3-playerStats.trainsLeft]}: elegí tu entrenamiento` : 'SÁBADO: listo para la pelea' , 320, 112);
 
       // Tarjetas de los 4 Stats elegibles
@@ -1865,17 +1968,17 @@
 
         ctx.textAlign = 'left';
         ctx.fillStyle = st.col;
-        ctx.font = '9px "Press Start 2P"';
+        ctx.font = '9px monospace';
         ctx.fillText(st.label, bx + 12, by + 22);
 
         ctx.fillStyle = '#fff';
         ctx.font='12px monospace';
         const tired=playerStats.fatigue;
         const effects={
-          fuerza:`Piña ${Math.round(8+playerStats.fuerza*1.8)} · Patada ${Math.round(13+playerStats.fuerza*1.8)}`,
+          fuerza:`Piña ${Math.round(8+playerStats.fuerza*1)} · Patada ${Math.round(13+playerStats.fuerza*1)}`,
           velocidad:`Movimiento ${((2.6+playerStats.velocidad*.45)*(1-tired/470)).toFixed(1)}`,
           aguante:`Vida de pelea ${Math.round((110+playerStats.aguante*18)*(1-tired/350))}`,
-          tecnica:`Especial ${Math.round(32+playerStats.fuerza*1.8+playerStats.tecnica*3)}`
+          tecnica:`Especial ${Math.round(32+playerStats.fuerza*1+playerStats.tecnica*2)}`
         };
         ctx.fillText(`Nv.${st.val} · ${effects[st.key]}`,bx+12,by+42);
       });
@@ -1895,21 +1998,21 @@
 
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffcc00';
-        ctx.font = '11px "Press Start 2P"';
-        ctx.fillText(`ENTRENANDO ${minigame.statTarget.toUpperCase()} (${minigame.attempts}/3)`, 320, 160);
+        ctx.font = '11px monospace';
+        ctx.fillText(`ENTRENANDO ${minigame.statTarget.toUpperCase()} (${minigame.statTarget==='tecnica'?minigame.attempts+'/6':minigame.statTarget==='aguante'?minigame.hits+'/12':minigame.attempts+'/'+(minigame.statTarget==='velocidad'?5:3)})`, 320, 160);
 
         ctx.fillStyle = '#fff';
-        ctx.font = '9px "Press Start 2P"';
+        ctx.font = '9px monospace';
         ctx.font='12px monospace';
         const st=minigame.statTarget;
-        const instruction=st==='tecnica'?'SEGUÍ LA SECUENCIA · Z: PIÑA · X: PATADA':st==='aguante'?'BOLSA: 12 GOLPES EN 5 SEGUNDOS · Z O TOCÁ':st==='velocidad'?'CUERDA: UN SALTO POR VUELTA EN LA ZONA VERDE':'PESAS: MARCÁ 3 REPETICIONES EN LA ZONA VERDE';
+        const instruction=st==='tecnica'?'SEGUÍ LA SECUENCIA · Z: PIÑA · X: PATADA':st==='aguante'?'BOLSA: GOLPEÁ AL RITMO VERDE · Z O TOCÁ':st==='velocidad'?'CUERDA: UN SALTO POR VUELTA EN LA ZONA VERDE':'PESAS: MARCÁ 3 REPETICIONES EN LA ZONA VERDE';
         ctx.fillText(instruction,320,190);
         if(st==='tecnica'){
           ctx.fillStyle='#7dd3fc';ctx.font='bold 20px monospace';
           minigame.sequence.forEach((key,i)=>{ctx.fillStyle=i<minigame.attempts?'#748378':i===minigame.attempts?'#ffcc00':'#fff';ctx.fillText(key==='KeyZ'?'Z':'X',210+i*44,237);});
           ctx.fillStyle='#bbb';ctx.font='12px monospace';ctx.fillText('Usá los botones PIÑA y PATADA en el celular',320,304);
         } else if(st==='aguante'){
-          ctx.fillStyle='#ffcc00';ctx.font='bold 22px monospace';ctx.fillText(`${minigame.hits}/12 · ${Math.max(0,(300-minigame.frames)/60).toFixed(1)}s`,320,238);
+          ctx.fillStyle=minigame.frames%30>=8&&minigame.frames%30<=22?'#66dd88':'#ffcc00';ctx.font='bold 16px monospace';ctx.fillText(`${minigame.hits}/12 · ${Math.max(0,(420-minigame.frames)/60).toFixed(1)}s · ${minigame.frames%30>=8&&minigame.frames%30<=22?'¡GOLPEÁ!':'ESPERÁ'}`,320,238);
         }
 
 
@@ -1950,7 +2053,7 @@
       ctx.strokeRect(200, 335, 240, 45);
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.font = '12px "Press Start 2P"';
+      ctx.font = '12px monospace';
       ctx.font = '10px monospace';
       ctx.fillText(playerStats.trainsLeft ? 'COMPLETÁ LOS 3 DÍAS' : 'SÁBADO · ¡IR A PELEAR!', 320, 363);
       return;
@@ -1972,11 +2075,11 @@
 
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffcc00';
-      ctx.font = '16px "Press Start 2P"';
-      ctx.fillText('¡CAMPEÓN MUNDIAL DE LA UFC!', 320, 215);
+      ctx.font = '16px monospace';
+      ctx.fillText('¡CAMPEÓN DE LA LIGA MUNDIAL!', 320, 215);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '9px "Press Start 2P"';
+      ctx.font = '9px monospace';
       ctx.fillText('Lautaro recuperó su mochila en el torneo de Villa Madero,', 320, 250);
       ctx.fillText('se volvió viral y noqueó a Henderson en Las Vegas', 320, 272);
       ctx.fillText('con Don Osvaldo en su esquina.', 320, 294);
@@ -1994,20 +2097,8 @@
 
   document.getElementById('btn-subagents').addEventListener('click', () => {
     const f = FIGHTS[currentFightIndex];
-    modalContent.innerHTML = `
-      <div class="agent-card">
-        <div class="agent-title">🎨 AGENTE DE ARTE 16-BITS (RETRO CRT)</div>
-        <div>Retratos integrados con paleta de los 90 y tramado (dithering) en la pantalla VS y el HUD: Lautaro con la herida en la mejilla, El Kevin con gorra roja hacia atrás, Don Osvaldo con toalla al cuello, El Braian de campera verde y Henderson con protector bucal frente a la bandera.</div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-title">⚖️ AGENTE ADVERSARIAL DE BALANCE</div>
-        <div>En el prólogo en Estación Villa Madero ahora podés conectarle varios golpes seguidos a Kevin sacándole 3-4 HP para que se sienta que te defendiste, antes de que te supere en daño y entre El Braian de atrás.</div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-title">🥊 AGENTE ENTRENADOR (LECTURA DE RIVAL ACTUAL: ${f.name})</div>
-        <div>Tus stats actuales: Fuerza ${playerStats.fuerza} | Velocidad ${playerStats.velocidad} | Aguante ${playerStats.aguante} | Técnica ${playerStats.tecnica}. Aprovechá el cartel rojo (!) sobre el rival para anticiparlo con golpe crítico.</div>
-      </div>
-    `;
+    const m=playerMetrics();
+    modalContent.innerHTML = `<div class="agent-card"><div class="agent-title">CONTROLES</div><div>Flechas: moverte · Z: piña · X: patada · C: guardia · V: especial cargada. La especial rompe la guardia e interrumpe ataques. Mirá la alerta roja del rival.</div></div><div class="agent-card"><div class="agent-title">PRÓXIMO RIVAL: ${f.name}</div><div>${(STYLE_ADVICE[f.style]||STYLE_ADVICE.basic).join('<br>')}</div></div><div class="agent-card"><div class="agent-title">TU PREPARACIÓN</div><div>Vida ${m.hp}/${m.maxHp} · Piña ${m.punch} · Patada ${m.kick} · Especial ${m.special}. Entrená tres días o descansá; el sábado elegís prepararte o pelear. Comprar no consume sesiones.</div></div>`;
     modal.style.display = 'flex';
   });
 
@@ -2020,35 +2111,67 @@
   document.getElementById('guide-close').addEventListener('click',()=>{guide.open=false;try{localStorage.setItem('cf-guide-seen','1');}catch{}});
   document.getElementById('buy-food').addEventListener('click',()=>recover('food'));
   document.getElementById('buy-massage').addEventListener('click',()=>recover('massage'));
+  document.getElementById('scene-next').addEventListener('click',()=>{if(gameState===STATE.ARRIVAL)sceneFrame=240;if(gameState===STATE.WEEK_RESULT)sceneFrame=120;handleActionPress('Space');});
   let panelSignature='';
+  function goFight(){if(gameState!==STATE.GYM||minigame.active||playerStats.trainsLeft!==0)return;fightShop=false;gameState=STATE.VS_SCREEN;vsTimer=210;saveProgress();startBGM('vs');}
   function updatePanels(){
-    const visible=![STATE.TITLE,STATE.INTRO_STORY].includes(gameState);
-    const shopping=gameState===STATE.GYM&&!minigame.active;
+    const visible=![STATE.TITLE,STATE.INTRO_STORY,STATE.POST_ROBO,STATE.ARRIVAL,STATE.COACH].includes(gameState);
+    const atGym=gameState===STATE.GYM&&!minigame.active;
+    const shopping=atGym&&(playerStats.trainsLeft>0||fightShop);
+    document.getElementById('scene-controls').hidden=![STATE.POST_ROBO,STATE.ARRIVAL,STATE.COACH,STATE.TRAIN_TRAVEL,STATE.BRIEF,STATE.WEEK_RESULT,STATE.VICTORY_FINAL].includes(gameState);
     document.getElementById('player-panel').hidden=!visible;
+    document.getElementById('career-panel').hidden=!visible;
     document.getElementById('market').hidden=!shopping;
-    const signature=[gameState,playerStats.money,playerStats.fatigue,playerStats.aguante,playerStats.goodFood,player&&player.hp,player&&player.maxHp,recoveryMessage].join('|');
+    document.getElementById('gym-actions').hidden=!atGym;
+    document.getElementById('career-choice').hidden=gameState!==STATE.CAREER_EVENT;
+    const signature=JSON.stringify([gameState,week,currentFightIndex,playerStats,player?.hp,player?.maxHp,recoveryMessage,fightShop,minigame.active,careerEvent,saveAvailable]);
     if(signature===panelSignature)return;panelSignature=signature;
-    const hp=Math.round((110+playerStats.aguante*18)*(1-playerStats.fatigue/350));
-    const inFight=gameState===STATE.FIGHT&&player;
-    const life=inFight?Math.max(0,Math.ceil(player.hp)):hp;
-    const maxLife=inFight?player.maxHp:110+playerStats.aguante*18;
-    document.getElementById('player-panel').innerHTML=`<div>${inFight?'Vida actual':'Vida para pelear'}<strong>${life} / ${maxLife}</strong><meter min="0" max="${maxLife}" value="${life}"></meter></div><div>Fatiga<strong>${playerStats.fatigue} / 70</strong><meter min="0" max="70" value="${playerStats.fatigue}"></meter></div><div>Dinero disponible<strong>$${playerStats.money}</strong></div>`;
+    const m=playerMetrics(),inFight=gameState===STATE.FIGHT&&player;
+    const life=inFight?Math.max(0,Math.ceil(player.hp)):m.hp,maxLife=inFight?player.maxHp:m.maxHp;
+    const progress=currentFightIndex>=8?'Liga internacional':currentFightIndex===7?'Revancha del barrio':'Circuito argentino';
+    document.getElementById('career-panel').innerHTML=`<span><b>${progress}</b> · Semana ${week}</span><span>Fama <b>${playerStats.fame}</b></span><span>Victorias oficiales <b>${playerStats.officialWins}/10</b></span><span>Sponsor: <b>${playerStats.sponsor?'Panadería · +$50 por fecha':'sin contrato'}</b></span>${playerStats.car?'<span>🚗 Tu primer auto</span>':''}${playerStats.suspicion?`<span>Sospecha: ${playerStats.suspicion}/100</span>`:''}`;
+    document.getElementById('player-panel').innerHTML=`<div>${inFight?'Vida actual':'Vida para pelear'}<strong>${life} / ${maxLife}</strong><meter min="0" max="${maxLife}" value="${life}"></meter></div><div>Fatiga<strong>${playerStats.fatigue} / 70</strong><meter min="0" max="70" value="${playerStats.fatigue}"></meter><small>Menos fatiga = más vida y movilidad</small></div><div>Dinero<strong>$${playerStats.money}</strong><small>Viáticos al perder: $80</small></div><div>Plan del día<strong>${playerStats.trainsLeft?['Lunes','Miércoles','Viernes'][3-playerStats.trainsLeft]:'Sábado'}</strong><small>${playerStats.trainsLeft?'Entrená o descansá':'Preparación o pelea'}</small></div><div class="stat">Fuerza <strong>${playerStats.fuerza}</strong><small>Piña ${m.punch} · Patada ${m.kick}</small></div><div class="stat">Velocidad <strong>${playerStats.velocidad}</strong><small>Movimiento ${m.speed.toFixed(2)}</small></div><div class="stat">Aguante <strong>${playerStats.aguante}</strong><small>Vida máxima ${m.maxHp}</small></div><div class="stat">Técnica <strong>${playerStats.tecnica}</strong><small>Especial ${m.special} de daño base</small></div>`;
     for(const [kind,cost,reduction,label] of [['food',40,8,'Comida semanal'],['massage',60,30,'Masaje']]){
-      const remaining=Math.max(0,playerStats.fatigue-reduction);
-      const futureHp=Math.round((110+playerStats.aguante*18)*(1-remaining/350));
+      const remaining=Math.max(0,playerStats.fatigue-reduction),futureHp=Math.round(m.maxHp*(1-remaining/350));
       const button=document.getElementById('buy-'+kind);
       button.disabled=!shopping||playerStats.money<cost||(kind==='food'?playerStats.goodFood:playerStats.fatigue===0);
-      button.innerHTML=`<b>${label} · $${cost}</b><br>Fatiga: ${playerStats.fatigue} → ${remaining}<br>Vida para pelear: ${hp} → ${futureHp}<br>Te quedan $${Math.max(0,playerStats.money-cost)}${kind==='food'?'<br>Entrenar cansa menos esta semana':''}`;
+      button.innerHTML=`<b>${label} · $${cost}</b><br>Fatiga: ${playerStats.fatigue} → ${remaining}<br>Vida para pelear: ${m.hp} → ${futureHp}<br>Te quedan $${Math.max(0,playerStats.money-cost)}${kind==='food'?'<br>Entrenar cansa menos esta semana':''}${playerStats.money<cost?'<br>Saldo insuficiente':''}`;
     }
-    document.getElementById('market-message').textContent=recoveryMessage||'Comprar no consume un día. El descanso gratis se elige dentro del gimnasio.';
+    const gear=document.getElementById('equipment-offers');gear.innerHTML='';
+    if(!playerStats.sponsor){const sb=document.createElement('button');sb.className='gear';sb.disabled=!shopping||playerStats.fame<8;sb.innerHTML='<b>Sponsor de panadería</b><br>'+(playerStats.fame<8?'Se desbloquea con 8 de fama':'Firmar gratis · +$50 por fecha oficial');sb.addEventListener('click',signSponsor);gear.appendChild(sb);}
+    for(const [stat,item] of Object.entries(EQUIPMENT)){
+      const b=document.createElement('button');b.className='gear';b.disabled=!shopping||playerStats.equipment[stat]||playerStats.fame<item.fame||playerStats.money<item.cost;
+      b.innerHTML=`<b>${item.name} · $${item.cost}</b><br>${playerStats.equipment[stat]?'COMPRADO · permanente':playerStats.fame<item.fame?`Se desbloquea con ${item.fame} de fama`:`Mejora ${stat}: +1 nivel y +5 fatiga por sesión`}<br>${playerStats.equipment[stat]?'Podés alternar rutina básica o avanzada':`Saldo después: $${Math.max(0,playerStats.money-item.cost)}`}`;
+      b.addEventListener('click',()=>buyEquipment(stat));gear.appendChild(b);
+    }
+    const car=document.getElementById('car-offer');car.innerHTML='';const cb=document.createElement('button');cb.className='gear';cb.disabled=!shopping||playerStats.car||playerStats.fame<12||playerStats.money<1800;cb.innerHTML=`<b>Tu primer auto usado · $1800</b><br>${playerStats.car?'COMPRADO · aparece frente al gimnasio':playerStats.fame<12?'Se desbloquea con 12 de fama':'Un logro visible. No aumenta estadísticas.'}<br>Saldo después: $${Math.max(0,playerStats.money-1800)}`;cb.addEventListener('click',buyCar);car.appendChild(cb);
+    document.getElementById('market-message').textContent=recoveryMessage||'Los productos se desbloquean con fama. Comprar no consume una sesión.';
+    const actions=document.getElementById('gym-actions');actions.innerHTML='';
+    if(atGym){
+      const heading=document.createElement('p');heading.textContent=playerStats.trainsLeft?`${['Lunes','Miércoles','Viernes'][3-playerStats.trainsLeft]}: elegí una actividad. Entrenar suma 1–2 niveles; hacerlo bien da 2.`:'Sábado: preparate y entrá al ring. Hoy no hay entrenamientos.';actions.appendChild(heading);
+      const grid=document.createElement('div');grid.className='actions';actions.appendChild(grid);
+      function action(label,fn){const b=document.createElement('button');b.textContent=label;b.addEventListener('click',fn);grid.appendChild(b);}
+      if(playerStats.trainsLeft){
+        for(const [st,label] of [['fuerza','Pesas · fuerza'],['velocidad','Cuerda · velocidad'],['aguante','Bolsa · aguante'],['tecnica','Secuencia · técnica']]){const up=trainingUpgrade(st);action(`${label} · +${1+up.gain} a ${2+up.gain} niveles · +${(playerStats.goodFood?7:12)+up.fatigue} fatiga`,()=>startMinigame(st));}
+        action('Descansar gratis · consume el día · −25 fatiga',()=>recover('rest'));
+        if(Object.values(playerStats.equipment).some(Boolean)){const label=document.createElement('label');label.id='training-mode';const input=document.createElement('input');input.type='checkbox';input.checked=playerStats.enhancedTraining;input.addEventListener('change',()=>{playerStats.enhancedTraining=input.checked;saveProgress();});label.appendChild(input);label.append(' Usar equipo avanzado: +1 nivel, +5 fatiga. Desmarcá para rutina básica.');actions.appendChild(label);}
+      }else{
+        action('Empezar pelea',goFight);
+        action(fightShop?'Cerrar preparación':'Prepararse · comida y masaje',()=>{fightShop=!fightShop;panelSignature='';});
+      }
+    }
+    const eventPanel=document.getElementById('career-choice');eventPanel.innerHTML='';
+    if(gameState===STATE.CAREER_EVENT&&careerEvent){const title=document.createElement('h2');title.textContent=careerEvent.title;eventPanel.appendChild(title);for(const line of careerEvent.lines){const p=document.createElement('p');p.textContent=line;eventPanel.appendChild(p);}const grid=document.createElement('div');grid.className='actions';eventPanel.appendChild(grid);careerEvent.choices.forEach((label,i)=>{const b=document.createElement('button');b.textContent=label;b.addEventListener('click',()=>chooseCareerEvent(i));grid.appendChild(b);});}
+    document.getElementById('save-status').textContent=saveAvailable?(savedRun?'Guardado automático · podés cerrar y continuar desde la portada.':'La partida se guardará al comenzar tu preparación.'):'Este navegador no permite guardar. Dejá la pestaña abierta para continuar.';
   }
 
-  // Iniciar Loop
-  function loop() {
-    update();
-    draw();
-    updatePanels();
-    requestAnimationFrame(loop);
+  // Keep combat/training timing consistent on 60/120/144 Hz displays.
+  let previousFrame=null,accumulator=0;
+  function loop(now=0) {
+    if(previousFrame===null)previousFrame=now;
+    accumulator+=Math.min(100,Math.max(0,now-previousFrame));previousFrame=now;
+    while(accumulator>=1000/60){update();accumulator-=1000/60;}
+    draw();updatePanels();requestAnimationFrame(loop);
   }
   loop();
 })();

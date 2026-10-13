@@ -3,48 +3,27 @@
 Actualizado: 2026-10-13.
 
 ## Cómo retomar
-Leer este archivo y el código antes de trabajar. No confundir propuestas con funciones terminadas.
-Eliminar un pendiente únicamente después de implementarlo y verificarlo. Actualizar fecha y siguiente paso en el mismo cambio. Git conserva el historial.
-Este archivo es la referencia actual; docs/GDD.md y docs/ROADMAP.md son antecedentes cuando entren en conflicto.
+Leer este archivo y el código. Eliminar una tarea sólo cuando esté implementada y verificada. Git conserva el historial. Este archivo manda sobre los antecedentes de docs/GDD.md y docs/ROADMAP.md.
 
-## Estado comprobado de esta sesión
-El juego base ya está publicado en index.html, con retratos y tools/check-game.cjs.
-Pruebas de lógica pasan para guardado/continuación, secuencias de entrenamiento, compras, resultados y transiciones.
-Se añadió guía inicial que se cierra y recuerda su lectura; panel grande de vida, fatiga y dinero; tienda con precio, fatiga/vida previstas y saldo restante. Diseño adaptable a celular.
-Verificación visual en navegador pendiente: Playwright está instalado pero su ejecutable Chromium no está disponible. No afirmar que se probó visualmente ni que el balance está resuelto.
+## Estado comprobado
+- Campaña: seis fechas argentinas, revancha breve con Braian, representante y cuatro fechas de una liga ficticia de kickboxing. Osvaldo sigue en tu esquina.
+- Rivales con presión y pausas, guardia, contragolpe, alcance y patrón equilibrado. El pizarrón usa sus estadísticas reales y consejos ligados a su estilo.
+- Ejercicios distintos; fatiga; descanso gratuito; comida y masaje. Sábado con sólo dos acciones principales: prepararse o pelear.
+- Fama, sponsor, bolsas crecientes, equipo permanente y rutina avanzada opcional (+1 nivel, +5 fatiga). Auto como logro visible sin efecto en combate.
+- Un encuentro clandestino opcional tras dos victorias, aceptar/rechazar explícitos, combate, premio, fatiga, sospecha, riesgo de perder sponsor y suspensión. No avanza el circuito.
+- Guía inicial que recuerda su lectura, estadísticas grandes, compras con vista previa, retratos para todos los rivales y escenas que se pueden saltar.
+- Guardado v2 por identidad de rival, migración v1, compras/decisiones/resultados pendientes y final persistentes. Reabrir un resultado no vuelve a pagar. Si se cierra durante el combate se retoma su preparación.
+- Corregida victoria registrada como derrota. Golpes normales ya no cancelan todos los ataques del rival; sólo la especial interrumpe. Simulación a 60 pasos por segundo independientemente de la pantalla.
 
-## Pendientes, en orden
+## Verificación realizada
+`node tools/check-game.cjs`: 25 comprobaciones de lógica de campaña, economía, ejercicios, estilos, KO, guardado, migración, reinicio, controles de sábado y reloj.
+`node tools/simulate-combat.cjs`: 22 combates deterministas, dos políticas. Con tres sesiones exitosas semanales y fatiga 20: primeras fechas ~13–18 segundos; final ~20 segundos. Braian ~4 segundos deliberadamente. No son mediciones de jugadores reales.
+`node tools/render-game.cjs <carpeta>`: inspección visual de 10 estados de canvas con los retratos reales. La fuente monospace de esa herramienta es una aproximación local; no verifica CSS ni interacción del navegador.
+`node tools/package-game.cjs`: genera conurbano-fighter.html con imágenes incluidas para abrir sin carpeta de assets.
 
-### 1. Cerrar la base jugable
-- [ ] Verificar guardado y continuación, estilos de rivales y pistas de Osvaldo, y ejercicios distintos.
-- [ ] Comprobar balance jugando: hubo ajustes demasiado difíciles y demasiado fáciles. Las pruebas de lógica no prueban diversión.
-- [ ] Completar el panel grande con estadísticas de fuerza, velocidad, aguante y técnica; vida, fatiga y dinero ya están ampliados.
-- [ ] Conservar el sábado con solo preparación (comida/masaje) o empezar pelea, sin ejercicios.
-- [ ] Mostrar explicaciones iniciales una sola vez y permitir saltar transiciones repetidas. Mantener consejos específicos de cada próximo rival.
-
-### 2. Progresión y economía
-- [ ] Incorporar fama que desbloquee sponsors, mejores bolsas y productos.
-- [ ] Ajustar ingresos y recuperación para que perder no produzca una espiral sin salida; conservar descanso gratis.
-- [ ] Comprar equipamiento permanente que mejore un ejercicio concreto: mayor ganancia y mayor fatiga, sin volver inútiles las alternativas.
-- [ ] Añadir compras de progreso personal, incluido auto; reflejarlas visualmente, sin dar fuerza por comprar bienes.
-- [ ] Validar primero tres peleas completas, un sponsor y una compra importante antes de extender la campaña.
-
-### 3. Campaña
-- [ ] Seis peleas argentinas: dos barriales, dos regionales, semifinal y campeonato.
-- [ ] Rivales que cambien las decisiones: presión con agotamiento, contragolpe y alcance, entre otros; no solo más vida.
-- [ ] Alternar novedades entre peleas: ejercicio, sponsor, mejora o escena breve del barrio.
-- [ ] Revancha breve y contundente con Brian como cierre del barrio y demostración del progreso.
-- [ ] Oferta de representante y salto a liga internacional ficticia; Osvaldo sigue en la esquina.
-- [ ] Cuatro peleas internacionales hasta el título y final del juego.
-- [ ] Mantener coherencia entre reglas de combate y liga; no presentar boxeo como UFC ni ampliar a suelo/derribos sin una decisión nueva.
-
-### 4. Encuentro opcional de riesgo
-- [ ] Tras las primeras dos victorias, una oferta de la mafia con aceptar/rechazar y riesgos explícitos.
-- [ ] Aceptar abre pelea opcional, pago y fatiga, y suma sospecha.
-- [ ] Definir consecuencias de ser descubierto: perder sponsor o suspensión; comunicar el riesgo antes de elegir.
-- [ ] Rechazar conserva la ruta deportiva y abre una oportunidad legal menos lucrativa.
-- [ ] Probar un solo encuentro; no abrir una campaña criminal completa todavía.
-- [ ] Evitar un 50–50 arbitrario como única mecánica y evitar que aceptar sea siempre la mejor opción.
+## Pendientes
+- [ ] Probar la campaña jugando en navegador real: especial, lectura de ataques y descanso frente a rutina avanzada. Ajustar sólo tras registrar rival, stats, fatiga y resultado.
+- [ ] Revisar CSS, scroll, foco y controles táctiles en escritorio y teléfono reales. No hay Chromium/Firefox instalado en este entorno; las pruebas VM y los renders no reemplazan esa revisión.
 
 ## Siguiente paso
-Verificar visualmente panel y tienda en escritorio/celular; completar estadísticas grandes y continuar progresión económica. Mantener el balance como pendiente hasta probar jugabilidad.
+Jugar las primeras tres fechas con preparación equilibrada, probar el sponsor y una mejora, y contrastar con una ruta que descansa más. Si una pelea queda demasiado fácil/difícil, registrar sus números antes de tocar el balance.
