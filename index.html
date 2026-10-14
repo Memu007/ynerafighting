@@ -655,17 +655,17 @@
     ['henderson','HENDERSON','LIGA INTERNACIONAL · CINTURÓN',650,27,2.65,'balanced']
   ];
   const FIGHTS=[{
-    id:'prologo_kevin',name:'EL KEVIN',subtitle:'EMBOSCADA EN ESTACIÓN MADERO',portrait:'kevin',stage:'madero',isPrologue:true,hp:240,atk:18,speed:2.3,color:'#1049a8',capColor:'#d62424',style:'prologue',
+    id:'prologo_kevin',name:'EL KEVIN',subtitle:'EMBOSCADA EN ESTACIÓN MADERO',portrait:'kevin',stage:'madero',isPrologue:true,hp:240,atk:18,speed:2.3,style:'prologue',
     quotePlayer:'Dejá pasar, loco. Vengo de cursar y laburar.',quoteEnemy:'¡Entregá la mochila!'
   },...fightData.map(([id,name,subtitle,hp,atk,speed,style],i)=>({
     id,name,subtitle,hp:Math.round(hp*(i===6?1:2.8)),atk,speed,style,portrait:id,
-    stage:i>=7?'arena_ring':i===6?'madero':i>=4?'estadio_ring':i>=2?'poli_ring':'club_ring',isPrologue:false,color:['#a65b24','#7949aa','#238786','#a93434'][i%4],capColor:null,
+    stage:i>=7?'arena_ring':i===6?'madero':i>=4?'estadio_ring':i>=2?'poli_ring':'club_ring',isPrologue:false,
     official:i!==6,international:i>=7,purse:i>=7?650+(i-7)*220:160+i*65,
     quotePlayer:i===6?'Esta vez de frente, Braian. Y acá termina.':'Otra semana de trabajo. Vamos al ring.',quoteEnemy:'Acá se demuestra lo que entrenaste.'
   }))];
   const FINAL_FIGHT_INDEX=11;
   const OPTIONAL_FIGHT_INDEX=FIGHTS.length;
-  FIGHTS.push({id:'encargo',name:'EL CUSTODIO',subtitle:'ENCARGO CLANDESTINO · OPCIONAL',portrait:'custodio',stage:'madero',isPrologue:false,hp:280,atk:15,speed:2.15,color:'#47375f',capColor:null,style:'counter',official:false,purse:420,quotePlayer:'Esto no estaba en el plan.',quoteEnemy:'Elegiste el lugar equivocado.'});
+  FIGHTS.push({id:'encargo',name:'EL CUSTODIO',subtitle:'ENCARGO CLANDESTINO · OPCIONAL',portrait:'custodio',stage:'madero',isPrologue:false,hp:280,atk:15,speed:2.15,style:'counter',official:false,purse:420,quotePlayer:'Esto no estaba en el plan.',quoteEnemy:'Elegiste el lugar equivocado.'});
   let careerEvent=null, optionalReturnIndex=null;
   function trainingUpgrade(stat){const enhanced=playerStats.equipment[stat]&&playerStats.enhancedTraining;return {gain:enhanced?1:0,fatigue:enhanced?5:0};}
   const EQUIPMENT={fuerza:{name:'Banco y discos',cost:250,fame:2},velocidad:{name:'Cuerda profesional',cost:220,fame:2},aguante:{name:'Bicicleta fija',cost:330,fame:4},tecnica:{name:'Manoplas y sesiones técnicas',cost:380,fame:4}};
@@ -1429,7 +1429,7 @@
         const amb=g.createRadialGradient(515,200,20,515,200,260);amb.addColorStop(0,'rgba(255,200,120,.16)');amb.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=amb;g.fillRect(0,0,640,400);
         const win=g.createRadialGradient(120,100,20,120,100,220);win.addColorStop(0,'rgba(120,160,255,.12)');win.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=win;g.fillRect(0,0,640,400);
       }),0,0);
-      drawFighterSprite({x:330,y:286,dir:1,state:'seated'},true,'#4a525d',null);
+      drawFighterSprite({x:330,y:286,dir:1,state:'seated'},'lautaro_calle');
       return;
     }
     if(stage === 'gym_outside') {
@@ -1623,64 +1623,47 @@
     }),0,0);
   }
 
-  function drawFighterSprite(f, isPlayer, topColor, capColor) {
-    ctx.save();
-    const moving = f.state === 'walk';
-    const phase = Date.now()/120;
-    const bob = moving ? Math.sin(phase)*2 : Math.sin(phase/3);
-    ctx.translate(Math.round(f.x), Math.round(f.y));
-    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,3,35,7,0,0,Math.PI*2);ctx.fill();
-    ctx.scale(f.dir || 1,1);
-    if(f.state==='ko'){ctx.rotate(-Math.PI/2);ctx.translate(0,-12);}
-    ctx.translate(0,bob);
-    const skin=f.coach?'#d3a27d':isPlayer?'#d7a078':'#bb865f', light=f.coach?'#e8ba92':isPlayer?'#f2bd91':'#dda778';
-    const pants=isPlayer?'#263c69':'#252a3a',glove=f.coach||f.state==='seated'?skin:isPlayer?'#cb313b':'#dba235';
-    function poly(points,color){ctx.fillStyle=color;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fill();ctx.strokeStyle='#171a24';ctx.lineWidth=2;ctx.stroke();}
-    function limb(x,y,ex,ey,width,color){const dx=ex-x,dy=ey-y,l=Math.hypot(dx,dy)||1,nx=-dy/l*width/2,ny=dx/l*width/2;poly([[x+nx,y+ny],[ex+nx,ey+ny],[ex-nx,ey-ny],[x-nx,y-ny]],color);}
-    function hand(x,y){poly([[x-7,y-8],[x+6,y-9],[x+10,y-3],[x+8,y+6],[x-6,y+7],[x-9,y]],glove);ctx.fillStyle='#f4b8a2';ctx.fillRect(x-5,y-6,9,2);}
-    const seated=f.state==='seated';
-    const kick=f.state==='kick',punch=['punch','attack','special'].includes(f.state),block=f.state==='block';
-    // Rear leg and shoes.
-    const stride=moving?Math.sin(phase)*9:0;
-    if(seated){
-      limb(-9,-43,-29,-39,15,pants);limb(-29,-39,-28,-4,12,pants);
-      limb(8,-43,30,-34,16,pants);limb(30,-34,31,-4,12,pants);
-      poly([[-36,-9],[-22,-9],[-18,0],[-38,0]],'#151924');
-      poly([[25,-9],[39,-9],[44,0],[23,0]],'#151924');
-    } else {
-    limb(-9,-43,-20-stride,-22,15,pants);limb(-20-stride,-22,-25-stride,-4,12,pants);
-    poly([[-33-stride,-9],[-19-stride,-9],[-13-stride,0],[-35-stride,0]],'#151924');
-    if(kick){limb(8,-44,31,-56,16,pants);limb(31,-56,62,-62,12,pants);poly([[56,-69],[71,-68],[76,-59],[58,-55]],'#151924');}
-    else{limb(8,-43,20+stride,-23,16,pants);limb(20+stride,-23,18+stride,-5,12,pants);poly([[12+stride,-10],[25+stride,-10],[32+stride,-1],[10+stride,-1]],'#151924');}
+  // Hojas de sprites generadas con tools/art/sprites.py: celdas de 136×132, piso en y=127, torso en x=66.
+  const SPRITE_POSES=['guardia','paso1','paso2','pina','patada','bloqueo','golpe','ko','especial','sentado','senala'];
+  const SPRITE_CELL={w:136,h:132,anchorX:66,anchorY:127};
+  const spriteSheets={};
+  // Rutas literales: tools/package-game.cjs las reemplaza por data URIs en la versión portable.
+  for(const [id,src] of Object.entries({"lautaro": "assets/sprites/lautaro.png", "lautaro_calle": "assets/sprites/lautaro_calle.png", "kevin": "assets/sprites/kevin.png", "braian": "assets/sprites/braian.png", "custodio": "assets/sprites/custodio.png", "tito": "assets/sprites/tito.png", "rulo": "assets/sprites/rulo.png", "nico": "assets/sprites/nico.png", "marcos": "assets/sprites/marcos.png", "sergio": "assets/sprites/sergio.png", "puma": "assets/sprites/puma.png", "silva": "assets/sprites/silva.png", "petrov": "assets/sprites/petrov.png", "lee": "assets/sprites/lee.png", "henderson": "assets/sprites/henderson.png", "osvaldo": "assets/sprites/osvaldo.png"})){
+    const image=new Image();image.src=src;spriteSheets[id]=image;
+  }
+  function spritePose(f,phase){
+    switch(f.state){
+      case 'walk':return Math.sin(phase)>=0?'paso1':'paso2';
+      case 'punch':case 'attack':return 'pina';
+      case 'kick':return 'patada';
+      case 'block':return 'bloqueo';
+      case 'hit':return 'golpe';
+      case 'ko':return 'ko';
+      case 'special':return 'especial';
+      case 'seated':return 'sentado';
+      case 'point':return 'senala';
+      default:return 'guardia';
     }
-    ctx.fillStyle='#536b94';ctx.fillRect(-13,-40,4,14);
-    // Rear guarded arm, torso and shirt folds.
-    if(seated){limb(-15,-88,-23,-65,14,skin);limb(-23,-65,-27,-42,12,skin);hand(-27,-40);}else{limb(-15,-88,-26,-66,14,skin);limb(-26,-66,-7,-77,12,skin);hand(-6,-79);}
-    poly([[-13,-101],[9,-99],[24,-88],[19,-66],[12,-44],[-15,-44],[-22,-67],[-25,-88]],topColor);
-    poly([[-13,-97],[-5,-85],[4,-85],[10,-97],[4,-102],[-7,-103]],skin);
-    ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(-15,-86,5,26);
-    ctx.fillStyle=light;ctx.fillRect(18,-83,6,8);ctx.fillStyle='#88513c';ctx.fillRect(22,-75,3,7);ctx.fillRect(-8,-52,20,3);
-    ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(10,-82,5,26);ctx.fillRect(-5,-67,14,3);
-    if(f.coach){ctx.fillStyle='#ece8da';ctx.fillRect(-17,-96,8,42);ctx.fillRect(9,-94,8,41);ctx.fillStyle='#c6c2b6';ctx.fillRect(-16,-73,5,2);ctx.fillRect(10,-68,6,2);}
-    if(f.hasBackpack){poly([[-23,-90],[-33,-85],[-31,-53],[-20,-50]],'#86623a');}
-    // Profile with jaw, nose, ear and hair.
-    ctx.save();if(seated){ctx.translate(0,-99);ctx.rotate(.42);ctx.translate(0,99);}
-    poly([[-9,-126],[7,-127],[15,-118],[13,-111],[19,-107],[13,-104],[11,-96],[0,-93],[-10,-101],[-13,-117]],skin);
-    ctx.fillStyle=light;ctx.fillRect(0,-118,10,11);ctx.fillRect(-4,-105,9,5);
-    poly([[-13,-119],[-14,-129],[-6,-134],[5,-132],[13,-126],[11,-119],[1,-122],[-5,-115],[-9,-109]],f.coach?'#a9aaa2':isPlayer?'#172a43':'#35251f');
-    ctx.fillStyle='#fff';ctx.fillRect(7,-114,5,3);ctx.fillStyle='#171a24';ctx.fillRect(10,-114,2,3);ctx.fillRect(5,-118,8,2);ctx.fillRect(8,-102,5,2);
-    ctx.fillStyle='#b57153';ctx.fillRect(-10,-111,4,7);
-    if(f.coach){ctx.fillStyle='#dedbd0';ctx.fillRect(5,-104,10,3);ctx.fillRect(-12,-117,4,15);ctx.fillStyle='#80664f';ctx.fillRect(-5,-99,14,2);ctx.fillRect(0,-110,7,1);}
-    if(capColor){poly([[-15,-126],[-12,-136],[7,-136],[15,-127]],capColor);ctx.fillStyle=capColor;ctx.fillRect(5,-127,19,4);}
-    else if(isPlayer){ctx.fillStyle='#dc3545';ctx.fillRect(-12,-123,25,4);poly([[-12,-122],[-28,-117],[-19,-115]],'#dc3545');}
-    ctx.restore();
-    // Front arm reflects the same existing combat states.
-    if(seated){limb(17,-86,26,-63,14,skin);limb(26,-63,29,-40,12,light);hand(29,-39);}
-    else if(block){limb(16,-87,21,-70,14,skin);limb(21,-70,14,-110,12,light);hand(15,-111);}
-    else if(punch){limb(17,-86,36,-86,14,skin);limb(36,-86,61,-90,12,light);hand(65,-90);ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(40,-101,16,2);}
-    else{limb(17,-86,28,-68,14,skin);limb(28,-68,35,-95,12,light);hand(35,-98);}
-    if(f.state==='special'){ctx.strokeStyle='#ffda42';ctx.lineWidth=3;ctx.beginPath();ctx.arc(63,-90,19,0,Math.PI*2);ctx.stroke();}
-    if(!isPlayer&&f.telegraph>0){ctx.fillStyle='#ff3939';ctx.font='bold 20px monospace';ctx.fillText('!',0,-146);}
+  }
+  // f: {x,y,dir,state,telegraph,hasBackpack}; sprite: id de la hoja. Los pies apoyan en f.y.
+  function drawFighterSprite(f, sprite) {
+    ctx.save();
+    const phase=Date.now()/120;
+    const bob=f.state==='walk'?Math.abs(Math.sin(phase))*-2:f.state==='ko'||f.state==='seated'?0:Math.round(Math.sin(phase/3));
+    ctx.translate(Math.round(f.x), Math.round(f.y));
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(f.state==='ko'?20:0,3,f.state==='ko'?60:35,7,0,0,Math.PI*2);ctx.fill();
+    ctx.scale(f.dir || 1,1);
+    const sheet=spriteSheets[sprite];
+    if(sheet&&sheet.complete&&sheet.naturalWidth){
+      const index=SPRITE_POSES.indexOf(spritePose(f,phase));
+      if(f.hasBackpack){ctx.fillStyle='#86623a';ctx.fillRect(-34,-96,14,40);ctx.fillStyle='#5f4428';ctx.fillRect(-34,-80,14,4);}
+      ctx.drawImage(sheet,index*SPRITE_CELL.w,0,SPRITE_CELL.w,SPRITE_CELL.h,-SPRITE_CELL.anchorX,-SPRITE_CELL.anchorY+bob,SPRITE_CELL.w,SPRITE_CELL.h);
+    }else{
+      // Silueta mientras carga la hoja.
+      ctx.fillStyle='#2a2f3d';ctx.fillRect(-18,-120,36,120);ctx.beginPath();ctx.arc(0,-112,12,0,Math.PI*2);ctx.fill();
+    }
+    if(f.state==='special'){ctx.strokeStyle='#ffda42';ctx.lineWidth=3;ctx.beginPath();ctx.arc(60,-92,19,0,Math.PI*2);ctx.stroke();}
+    if(f.telegraph>0){ctx.fillStyle='#ff3939';ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillText('!',0,-146);}
     ctx.restore();
   }
 
@@ -1707,7 +1690,7 @@
       ctx.textAlign='center';ctx.font='bold 38px monospace';ctx.fillStyle='#0b101b';ctx.fillText('CONURBANO',323,99);ctx.fillText('FIGHTER',323,141);
       ctx.fillStyle='#f2d38b';ctx.fillText('CONURBANO',320,96);ctx.fillStyle='#ed6a47';ctx.fillText('FIGHTER',320,138);
       ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL MUNDO',320,163);
-      drawFighterSprite({x:320,y:316,dir:1,state:'idle'},true,'#4a525d',null);
+      drawFighterSprite({x:320,y:316,dir:1,state:'idle'},'lautaro_calle');
       ctx.fillStyle='rgba(6,11,20,.92)';ctx.fillRect(40,325,560,57);
       ctx.strokeStyle='#dba748';ctx.strokeRect(40,325,560,57);
       ctx.font='bold 17px monospace';ctx.fillStyle=Math.floor(Date.now()/600)%2?'#f3d18b':'#fff';ctx.fillText(savedRun?'ESPACIO · Z · CONTINUAR':'ESPACIO · Z · TOCÁ PARA EMPEZAR',320,350);
@@ -1718,8 +1701,8 @@
     // --- 2. INTRODUCCIÓN EN ESTACIÓN VILLA MADERO ---
     if (gameState === STATE.INTRO_STORY) {
       drawStageBackground('madero');
-      drawFighterSprite({ x: 200, y: 310, dir: 1, state: 'idle', hasBackpack: true }, true, '#4a525d', '#2c4268');
-      drawFighterSprite({ x: 430, y: 310, dir: -1, state: 'idle' }, false, '#1049a8', '#d62424');
+      drawFighterSprite({ x: 200, y: 310, dir: 1, state: 'idle', hasBackpack: true }, 'lautaro_calle');
+      drawFighterSprite({ x: 430, y: 310, dir: -1, state: 'idle' }, 'kevin');
 
       // Caja de diálogo estilo 16-bits con el retrato aprobado
       ctx.fillStyle = 'rgba(8, 10, 20, 0.94)';
@@ -1884,8 +1867,8 @@
       ctx.fillText(String(fightTimer).padStart(2, '0'), 320, 38);
 
       // Luchadores
-      drawFighterSprite(player, true, '#4a525d', f.isPrologue ? '#2c4268' : null);
-      drawFighterSprite(enemy, false, f.color, f.capColor);
+      drawFighterSprite(player, f.isPrologue ? 'lautaro_calle' : 'lautaro');
+      drawFighterSprite(enemy, f.portrait);
 
       if(specialFx>0){
         const t=(38-specialFx)/38,x=specialOrigin+specialDirection*(50+t*110),y=player.y-88;
@@ -1896,7 +1879,7 @@
 
       // Si entra El Braian en la emboscada del prólogo
       if (braianAmbush && braianAmbush.active) {
-        drawFighterSprite({ x: braianAmbush.x, y: braianAmbush.y, dir: 1, state: 'attack' }, false, '#2e6f40', '#178a3d');
+        drawFighterSprite({ x: braianAmbush.x, y: braianAmbush.y, dir: 1, state: 'attack' }, 'braian');
       }
 
       // Textos de daño flotantes
@@ -1929,11 +1912,10 @@
       ctx.font='11px monospace';
       const rows=[['RESISTENCIA',Math.min(1,rival.hp/1820)],['PEGADA',Math.min(1,rival.atk/27)],['VELOCIDAD',Math.min(1,rival.speed/2.65)]];
       rows.forEach(([label,value],i)=>{const y=99+i*25;ctx.fillStyle='#e2e7ca';ctx.fillText(label+(i===0?' '+rival.hp:i===1?' '+rival.atk:' '+rival.speed.toFixed(2)),195,y);ctx.strokeStyle='#aebc9c';ctx.strokeRect(320,y-10,143,10);ctx.fillStyle='#c7d3b0';ctx.fillRect(321,y-9,141*value,8);});
-      drawFighterSprite({x:120,y:284,dir:1,state:'idle',coach:true},false,'#222a32',null);
+      drawFighterSprite({x:120,y:284,dir:1,state:'point'},'osvaldo');
       const pointing=Date.now()/1500%3;
       const targetY=96+Math.floor(pointing)*25;
-      ctx.strokeStyle='#d3a27d';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(142,198);ctx.lineTo(166,185);ctx.lineTo(181,177);ctx.stroke();
-      ctx.strokeStyle='#ccb886';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(181,177);ctx.lineTo(319,targetY);ctx.stroke();
+      ctx.strokeStyle='#ccb886';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(172,181);ctx.lineTo(319,targetY);ctx.stroke();
 
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='13px monospace';
       ctx.fillText(`LUNES · SEMANA ${week} · CUARTITO DEL GIMNASIO`,385,24);
@@ -1946,16 +1928,16 @@
     }
 
     if(gameState === STATE.WEEK_RESULT){
-      drawStageBackground(FIGHTS[weekResult.index].stage);
+      const resultFight=FIGHTS[weekResult.index];
+      drawStageBackground(resultFight.stage);
       ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);
-      drawFighterSprite({x:260,y:290,dir:1,state:'idle'},true,'#4a525d',null);
-      drawFighterSprite({x:380,y:290,dir:-1,state:'idle'},false,'#e5d3b7',null);
+      drawFighterSprite({x:260,y:290,dir:1,state:'idle'},resultFight.isPrologue?'lautaro_calle':'lautaro');
+      drawFighterSprite({x:380,y:290,dir:-1,state:weekResult.won?'ko':'idle'},resultFight.portrait);
       ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 20px monospace';
       ctx.fillText(weekResult.won?'¡GANASTE LA PELEA!':'ESTA VEZ NO ALCANZÓ',340,44);
       ctx.fillStyle='#fff';ctx.font='13px monospace';ctx.fillText(`SÁBADO · SEMANA ${week} · VS ${weekResult.rival}`,340,68);
       ctx.fillStyle='#141828';ctx.fillRect(25,303,590,85);ctx.strokeStyle='#ffcc00';ctx.strokeRect(25,303,590,85);
-      const resultFight=FIGHTS[weekResult.index];
       const remark=weekResult.optional?'Este encuentro no suma victorias oficiales.':!weekResult.won?'Perder enseña. Cobraste viáticos; podés prepararte y volver.':weekResult.index===7?'Recuperaste la mochila. El barrio quedó atrás.':weekResult.index===6?'Campeón argentino. Queda cerrar la historia con Braian.':weekResult.index===FINAL_FIGHT_INDEX?'Lo logramos, pibe. Del barrio al cinturón mundial.':weekResult.index===2?'Dos victorias. Empiezan a llegar ofertas.':'Otra fecha ganada. Osvaldo ya piensa en el siguiente rival.';
       ctx.fillStyle='#fff';ctx.font='13px monospace';
       ctx.fillText(remark,320,328);
@@ -1973,7 +1955,7 @@
         ctx.fillStyle='#e5dfc8';ctx.font='12px monospace';ctx.textAlign='center';ctx.fillText('VILLA MADERO · LA MATANZA',123,30);
         if(playerStats.car){ctx.fillStyle='#c28a38';ctx.fillRect(28,265,108,24);ctx.fillRect(53,251,57,20);ctx.fillStyle='#a9cbd7';ctx.fillRect(60,256,40,11);ctx.fillStyle='#171a24';ctx.beginPath();ctx.arc(50,291,11,0,Math.PI*2);ctx.arc(114,291,11,0,Math.PI*2);ctx.fill();}
         const x = travel ? (night ? 488-sceneFrame*3.6 : Math.min(488,80+sceneFrame*4)) : Math.min(488,55+sceneFrame*1.65);
-        if(sceneFrame < 270) drawFighterSprite({x,y:310,dir:night?-1:1,state:sceneFrame%24<12?'walk':'idle',hasBackpack:false},true,'#4a525d',null);
+        if(sceneFrame < 270) drawFighterSprite({x,y:310,dir:night?-1:1,state:sceneFrame%24<12?'walk':'idle',hasBackpack:false},'lautaro_calle');
         ctx.fillStyle = '#111';ctx.fillRect(0,345,640,55);
         ctx.fillStyle = '#ffcc00';ctx.font = '11px monospace';
         const day=['LUNES','MIÉRCOLES','VIERNES'][Math.min(2,3-playerStats.trainsLeft-(night?1:0))];

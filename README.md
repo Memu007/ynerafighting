@@ -27,6 +27,8 @@ El guardado conserva preparación, compras, decisiones, premios pendientes y el 
 
 ## Desarrollo y comprobaciones
 
+`python3 tools/art/sprites.py` regenera las hojas de sprites de `assets/sprites/` (requiere Pillow). `assets/sprites/revision.png` muestra todos los personajes y poses.
+
 ```bash
 node tools/check-game.cjs
 node tools/simulate-combat.cjs

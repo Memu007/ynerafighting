@@ -28,14 +28,16 @@ Leer este archivo y el código. Eliminar una tarea sólo cuando esté implementa
 Corregido: activación nativa con espacio/Enter, foco de la casilla de rutina, captura y cancelación del toque, desplazamiento automático a la arena y composición de combate horizontal. Condición del personaje visible antes de elegir actividad; catálogo permanente plegable para reducir el scroll.
 
 ## Mejoras visuales pendientes — orden de trabajo
-- [ ] Rehacer los cuerpos de los peleadores: sprites más detallados y coherentes con los retratos aprobados. Conservar caminar, piña, patada, guardia, especial, recibir golpe y KO. El retoque geométrico actual es provisorio.
-- [x] Habitación, interior del gimnasio y cuartito del pizarrón rehechos al nivel de la fachada (ventanas con luz, ring de fondo, estante de trofeos, pizarrón con tiza). Los fondos se dibujan una vez en un canvas auxiliar y se reutilizan. Pendiente: cuerpo de Osvaldo coherente con su retrato.
+- [x] Cuerpos de los peleadores: hojas de sprites en `assets/sprites/` generadas con `python3 tools/art/sprites.py` (modelo volumétrico de `tools/art/personaje.py`, colores tomados de los retratos). Once poses: guardia, dos pasos, piña, patada, bloqueo, golpe, KO tirado, especial, sentado y señalar. Lautaro tiene look de calle (buzo y gorra) para calle, prólogo y escenas, y look de ring (torso desnudo y vincha) para las peleas. Osvaldo tiene cuerpo propio con toalla. Pendiente de pulido: el KO con la cabeza girada y la capucha caída del buzo quedan toscos.
+- [x] Habitación, interior del gimnasio y cuartito del pizarrón rehechos al nivel de la fachada (ventanas con luz, ring de fondo, estante de trofeos, pizarrón con tiza). Los fondos se dibujan una vez en un canvas auxiliar y se reutilizan. Osvaldo ya tiene cuerpo propio.
 - [x] Estación Villa Madero rehecha: skyline iluminado, techo con tubos, tren con puertas, baldosas y niebla. Se usa en el prólogo y en la revancha con Braian.
 - [ ] Mejorar las animaciones de pesas, cuerda, bolsa y técnica. Los objetos y el personaje aún tienen arte provisional aunque los ejercicios funcionan distinto.
 - [x] Escenarios por circuito: Club Social (fechas 1–2), Polideportivo Municipal (3–4), estadio cubierto (5–6) y arena de Las Vegas (internacional). Multitudes estáticas por el caché de fondo; animarlas queda pendiente. Resultado y sábado usan el ring de esa pelea.
 - [ ] Pulir portada, escenas breves entre fechas e impactos/especial. La portada y la especial ya existen; falta llevar su acabado al nivel de los retratos.
 
 Los retratos detallados están integrados. Las correcciones de teclado, foco y pantalla móvil no completan estos pendientes de arte.
+
+Nota: la sección 8 de docs/GDD.md (sprites de 40×64 y 320×224) quedó vieja; la referencia de tamaño es la hoja aprobada de 104×132 y el canvas de 640×400.
 
 ## Verificación pendiente con jugadores
 - [ ] Evaluar diversión y dificultad con una persona jugando la campaña. Registrar rival, stats, fatiga y resultado antes de ajustar números.
