@@ -122,7 +122,7 @@
     font-size: 10px;
     cursor: pointer;
     box-shadow: 0 4px 0 #11111a;
-    touch-action: manipulation;
+    touch-action: none;
   }
 
   .ctrl-btn:active {
@@ -163,6 +163,14 @@
     font-size: 11px;
   }
 
+  @media(max-height:520px) and (orientation:landscape){
+    body.playing{padding:6px;justify-content:flex-start;min-height:100dvh;}
+    body.playing #top-bar,body.playing #guide,body.playing #career-panel,body.playing #player-panel,body.playing #save-status{display:none;}
+    body.playing #cabinet{max-width:calc((100dvh - 84px)*1.6);border-width:3px;}
+    body.playing #controls-bar{margin:0;padding:8px 0;gap:8px;}
+    body.playing .ctrl-btn{padding:10px 6px;}
+  }
+  #market details{margin-top:12px;}#market summary{cursor:pointer;color:#ffda62;padding:8px 0;}
   #scene-controls{width:100%;max-width:840px;margin:8px 0;}#scene-controls button{width:100%;min-height:44px;font:16px monospace;}
   [hidden] {display:none !important;}
   #career-panel,#gym-actions,#career-choice{width:100%;max-width:840px;background:#151d2c;border:1px solid #394b63;border-radius:10px;padding:14px;margin:8px 0;font:16px/1.5 system-ui,sans-serif;}
@@ -246,14 +254,14 @@
 
 <div id="scene-controls" hidden><button class="btn-retro" id="scene-next">CONTINUAR / SALTAR ESCENA</button></div>
 <section id="career-choice" hidden aria-label="Decisión de carrera"></section>
+<div id="player-panel" aria-label="Estado de Lautaro"></div>
 <section id="gym-actions" hidden aria-label="Plan del día"></section>
 <p id="save-status" role="status"></p>
-<div id="player-panel" aria-label="Estado de Lautaro"></div>
 <section id="market" hidden aria-label="Tienda de recuperación">
   <b>Preparación y recuperación · comprar no consume el día</b>
   <div class="offers"><button id="buy-food"></button><button id="buy-massage"></button></div>
-  <div id="equipment-offers" class="offers"></div>
-  <div id="car-offer" class="offers"></div>
+  <details><summary>Equipo permanente, sponsor y logros</summary><div id="equipment-offers" class="offers"></div>
+  <div id="car-offer" class="offers"></div></details>
   <p id="market-message" role="status"></p>
 </section>
 <script>
@@ -852,6 +860,7 @@
     saveProgress();travelMode='exit';sceneFrame=0;gameState=STATE.TRAIN_TRAVEL;
   }
 
+  function focusArena(){requestAnimationFrame(()=>canvas.scrollIntoView?.({block:'start',behavior:'auto'}));}
   function startMinigame(statName) {
     if (gameState!==STATE.GYM || minigame.active || playerStats.trainsLeft<=0 || !["fuerza","velocidad","aguante","tecnica"].includes(statName)) return;
     if (playerStats.trainsLeft > 0) {
@@ -862,7 +871,7 @@
       minigame.hits = 0;
       minigame.attempts = 0;
       minigame.statTarget = statName;minigame.lastInput=-60;minigame.frames=0;minigame.jumped=false;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
-      sfxSelect();
+      focusArena();sfxSelect();
     }
   }
 
@@ -980,14 +989,13 @@
   }
 
   window.addEventListener('keydown', (e) => {
+    const tag=e.target?.tagName;
+    // Preserve native button activation and checkbox/field navigation.
+    if(['INPUT','TEXTAREA','SELECT'].includes(tag)||(['BUTTON','SUMMARY'].includes(tag)&&['Space','Enter'].includes(e.code)))return;
     if(['ArrowLeft','ArrowRight','KeyC','KeyZ','KeyX','KeyV','Space'].includes(e.code))e.preventDefault();
     if(e.repeat)return;
-    if(['ArrowLeft','ArrowRight','KeyZ','KeyX','KeyC','KeyV','Space'].includes(e.code)&&!['BUTTON','SUMMARY','INPUT'].includes(e.target?.tagName))e.preventDefault();
-    if((['BUTTON','SUMMARY'].includes(e.target?.tagName)&&['Space','Enter'].includes(e.code))||['INPUT','TEXTAREA','SELECT'].includes(e.target?.tagName))return;
     keys[e.code] = true;
-    if (['KeyZ', 'KeyX', 'KeyV', 'Space', 'Enter', 'KeyN', 'Digit1', 'Digit2'].includes(e.code)) {
-      handleActionPress(e.code);
-    }
+    if (['KeyZ', 'KeyX', 'KeyV', 'Space', 'Enter', 'KeyN', 'Digit1', 'Digit2'].includes(e.code))handleActionPress(e.code);
   });
 
   window.addEventListener('keyup', (e) => {
@@ -1004,6 +1012,7 @@
     btn.addEventListener('keyup',e=>{if(['Space','Enter'].includes(e.code))keys[k]=false;});
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      btn.setPointerCapture?.(e.pointerId);
       keys[k] = true;
       handleActionPress(k);
     });
@@ -1013,6 +1022,7 @@
     });
     btn.addEventListener('pointerleave', () => { keys[k] = false; });
     btn.addEventListener('pointercancel',()=>{keys[k]=false;});
+    btn.addEventListener('lostpointercapture',()=>{keys[k]=false;});
   });
 
   // Clics directos en el Canvas (para el Gimnasio y pantallas de historia)
@@ -1148,7 +1158,7 @@
       if (vsTimer <= 0) {
         setupFight(currentFightIndex);
         gameState = STATE.FIGHT;
-        startBGM(FIGHTS[currentFightIndex].stage === 'ufc_octagon' ? 'ufc' : 'madero');
+        focusArena();startBGM(FIGHTS[currentFightIndex].stage === 'ufc_octagon' ? 'ufc' : 'madero');
       }
       return;
     }
@@ -2115,6 +2125,7 @@
   let panelSignature='';
   function goFight(){if(gameState!==STATE.GYM||minigame.active||playerStats.trainsLeft!==0)return;fightShop=false;gameState=STATE.VS_SCREEN;vsTimer=210;saveProgress();startBGM('vs');}
   function updatePanels(){
+    document.body?.classList?.toggle('playing',gameState===STATE.FIGHT||minigame.active);
     const visible=![STATE.TITLE,STATE.INTRO_STORY,STATE.POST_ROBO,STATE.ARRIVAL,STATE.COACH].includes(gameState);
     const atGym=gameState===STATE.GYM&&!minigame.active;
     const shopping=atGym&&(playerStats.trainsLeft>0||fightShop);
@@ -2146,6 +2157,7 @@
     }
     const car=document.getElementById('car-offer');car.innerHTML='';const cb=document.createElement('button');cb.className='gear';cb.disabled=!shopping||playerStats.car||playerStats.fame<12||playerStats.money<1800;cb.innerHTML=`<b>Tu primer auto usado · $1800</b><br>${playerStats.car?'COMPRADO · aparece frente al gimnasio':playerStats.fame<12?'Se desbloquea con 12 de fama':'Un logro visible. No aumenta estadísticas.'}<br>Saldo después: $${Math.max(0,playerStats.money-1800)}`;cb.addEventListener('click',buyCar);car.appendChild(cb);
     document.getElementById('market-message').textContent=recoveryMessage||'Los productos se desbloquean con fama. Comprar no consume una sesión.';
+    const trainingFocus=document.activeElement?.matches?.('#training-mode input');
     const actions=document.getElementById('gym-actions');actions.innerHTML='';
     if(atGym){
       const heading=document.createElement('p');heading.textContent=playerStats.trainsLeft?`${['Lunes','Miércoles','Viernes'][3-playerStats.trainsLeft]}: elegí una actividad. Entrenar suma 1–2 niveles; hacerlo bien da 2.`:'Sábado: preparate y entrá al ring. Hoy no hay entrenamientos.';actions.appendChild(heading);
@@ -2154,7 +2166,7 @@
       if(playerStats.trainsLeft){
         for(const [st,label] of [['fuerza','Pesas · fuerza'],['velocidad','Cuerda · velocidad'],['aguante','Bolsa · aguante'],['tecnica','Secuencia · técnica']]){const up=trainingUpgrade(st);action(`${label} · +${1+up.gain} a ${2+up.gain} niveles · +${(playerStats.goodFood?7:12)+up.fatigue} fatiga`,()=>startMinigame(st));}
         action('Descansar gratis · consume el día · −25 fatiga',()=>recover('rest'));
-        if(Object.values(playerStats.equipment).some(Boolean)){const label=document.createElement('label');label.id='training-mode';const input=document.createElement('input');input.type='checkbox';input.checked=playerStats.enhancedTraining;input.addEventListener('change',()=>{playerStats.enhancedTraining=input.checked;saveProgress();});label.appendChild(input);label.append(' Usar equipo avanzado: +1 nivel, +5 fatiga. Desmarcá para rutina básica.');actions.appendChild(label);}
+        if(Object.values(playerStats.equipment).some(Boolean)){const label=document.createElement('label');label.id='training-mode';const input=document.createElement('input');input.type='checkbox';input.checked=playerStats.enhancedTraining;input.addEventListener('change',()=>{playerStats.enhancedTraining=input.checked;saveProgress();});label.appendChild(input);label.append(' Usar equipo avanzado: +1 nivel, +5 fatiga. Desmarcá para rutina básica.');actions.appendChild(label);if(trainingFocus)input.focus({preventScroll:true});}
       }else{
         action('Empezar pelea',goFight);
         action(fightShop?'Cerrar preparación':'Prepararse · comida y masaje',()=>{fightShop=!fightShop;panelSignature='';});

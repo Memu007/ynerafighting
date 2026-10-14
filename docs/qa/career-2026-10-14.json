@@ -1,0 +1,118 @@
+[
+  {
+    "rival": "TITO",
+    "stats": {
+      "fuerza": 3,
+      "velocidad": 1,
+      "aguante": 3,
+      "tecnica": 3,
+      "skillPoints": 0,
+      "trainsLeft": 0,
+      "fatigue": 21,
+      "money": 20,
+      "goodFood": true,
+      "fame": 0,
+      "officialWins": 0,
+      "sponsor": false,
+      "suspicion": 0,
+      "equipment": {},
+      "enhancedTraining": true,
+      "car": false,
+      "mafiaOffered": false,
+      "representative": false
+    },
+    "life": 154,
+    "state": "WEEK_RESULT",
+    "result": {
+      "won": true,
+      "rival": "TITO",
+      "prize": 160,
+      "index": 1,
+      "optional": false,
+      "detected": false
+    },
+    "hp": 122,
+    "enemyHp": 0,
+    "money": 180,
+    "seconds": 21.7,
+    "specials": 5
+  },
+  {
+    "rival": "EL RULO",
+    "stats": {
+      "fuerza": 5,
+      "velocidad": 3,
+      "aguante": 5,
+      "tecnica": 3,
+      "skillPoints": 0,
+      "trainsLeft": 0,
+      "fatigue": 34,
+      "money": 140,
+      "goodFood": true,
+      "fame": 2,
+      "officialWins": 1,
+      "sponsor": false,
+      "suspicion": 0,
+      "equipment": {},
+      "enhancedTraining": true,
+      "car": false,
+      "mafiaOffered": false,
+      "representative": false
+    },
+    "life": 181,
+    "state": "WEEK_RESULT",
+    "result": {
+      "won": true,
+      "rival": "EL RULO",
+      "prize": 225,
+      "index": 2,
+      "optional": false,
+      "detected": false
+    },
+    "hp": 55,
+    "enemyHp": 0,
+    "money": 365,
+    "seconds": 21,
+    "specials": 5
+  },
+  {
+    "rival": "NICO",
+    "stats": {
+      "fuerza": 8,
+      "velocidad": 3,
+      "aguante": 7,
+      "tecnica": 5,
+      "skillPoints": 0,
+      "trainsLeft": 0,
+      "fatigue": 52,
+      "money": 155,
+      "goodFood": true,
+      "fame": 4,
+      "officialWins": 2,
+      "sponsor": true,
+      "suspicion": 0,
+      "equipment": {
+        "fuerza": true
+      },
+      "enhancedTraining": true,
+      "car": false,
+      "mafiaOffered": true,
+      "representative": false
+    },
+    "life": 201,
+    "state": "WEEK_RESULT",
+    "result": {
+      "won": true,
+      "rival": "NICO",
+      "prize": 340,
+      "index": 3,
+      "optional": false,
+      "detected": false
+    },
+    "hp": 31,
+    "enemyHp": 0,
+    "money": 495,
+    "seconds": 25,
+    "specials": 7
+  }
+]

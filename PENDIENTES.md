@@ -1,6 +1,6 @@
 # Estado y pendientes — Conurbano Fighter
 
-Actualizado: 2026-10-13.
+Actualizado: 2026-10-14.
 
 ## Cómo retomar
 Leer este archivo y el código. Eliminar una tarea sólo cuando esté implementada y verificada. Git conserva el historial. Este archivo manda sobre los antecedentes de docs/GDD.md y docs/ROADMAP.md.
@@ -21,9 +21,15 @@ Leer este archivo y el código. Eliminar una tarea sólo cuando esté implementa
 `node tools/render-game.cjs <carpeta>`: inspección visual de 10 estados de canvas con los retratos reales. La fuente monospace de esa herramienta es una aproximación local; no verifica CSS ni interacción del navegador.
 `node tools/package-game.cjs`: genera conurbano-fighter.html con imágenes incluidas para abrir sin carpeta de assets.
 
+## Verificación en navegador — 2026-10-14
+`node tools/check-browser.cjs`: Chromium real, ventanas 1280×900, 360×800 y 800×360; teclado, foco, casilla de rutina avanzada, compras, preparación del sábado, continuación y eventos táctiles emulados. Sin errores JavaScript ni desbordamiento horizontal. En las dos pantallas móviles, arena y controles caben juntos durante el combate.
+`GAME_PLAY_CAREER=1 node tools/check-browser.cjs`: recorrido automático por la introducción y las tres primeras semanas usando botones, teclas y el reloj real del navegador. Completó las tres peleas, eligió el sponsor legal y compró el banco de pesas. Tito: ~22 s, vida final 122/154; Rulo: ~21 s, 55/181; Nico: ~25 s, 31/201. Cinco, cinco y siete especiales respectivamente. Son resultados de un controlador automático, no de una persona.
+
+Corregido: activación nativa con espacio/Enter, foco de la casilla de rutina, captura y cancelación del toque, desplazamiento automático a la arena y composición de combate horizontal. Condición del personaje visible antes de elegir actividad; catálogo permanente plegable para reducir el scroll.
+
 ## Pendientes
-- [ ] Probar la campaña jugando en navegador real: especial, lectura de ataques y descanso frente a rutina avanzada. Ajustar sólo tras registrar rival, stats, fatiga y resultado.
-- [ ] Revisar CSS, scroll, foco y controles táctiles en escritorio y teléfono reales. No hay Chromium/Firefox instalado en este entorno; las pruebas VM y los renders no reemplazan esa revisión.
+- [ ] Evaluar diversión y dificultad con una persona jugando la campaña. Registrar rival, stats, fatiga y resultado antes de ajustar números.
+- [ ] Comprobar respuesta y ergonomía en un teléfono físico. La emulación táctil y las capturas verifican geometría y eventos, pero no dedos, latencia y rendimiento del aparato.
 
 ## Siguiente paso
-Jugar las primeras tres fechas con preparación equilibrada, probar el sponsor y una mejora, y contrastar con una ruta que descansa más. Si una pelea queda demasiado fácil/difícil, registrar sus números antes de tocar el balance.
+Probar el juego en el teléfono y contrastar las primeras tres fechas con los resultados anteriores. Completar la campaña con una persona para detectar repeticiones o saltos de dificultad que las simulaciones no evalúan.

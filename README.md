@@ -36,3 +36,9 @@ node tools/package-game.cjs
 Las pruebas de lógica y las simulaciones no certifican que el juego sea divertido. El balance necesita una prueba humana. Para inspeccionar imágenes del canvas, `tools/render-game.cjs` requiere opcionalmente `@napi-rs/canvas`, pero el juego no lo necesita.
 
 Ver [PENDIENTES.md](PENDIENTES.md) para las verificaciones que faltan. Los documentos de `docs/` son antecedentes de diseño.
+
+## Revisión de navegador
+
+Las pruebas opcionales de interfaz están en `tools/check-browser.cjs` y requieren Playwright con Chromium instalado. No son dependencias para jugar. `GAME_PLAY_CAREER=1` añade el recorrido de introducción y tres semanas mediante eventos reales de teclado y botones. Las ventanas móviles emulan toque; no sustituyen un teléfono físico.
+
+La exportación con `tools/package-game.cjs` actualiza tanto el HTML portable como `conurbano-fighter-codigo.txt` para mantenerlos sincronizados.
