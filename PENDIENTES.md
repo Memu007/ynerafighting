@@ -29,9 +29,10 @@ Corregido: activación nativa con espacio/Enter, foco de la casilla de rutina, c
 
 ## Mejoras visuales pendientes — orden de trabajo
 - [ ] Rehacer los cuerpos de los peleadores: sprites más detallados y coherentes con los retratos aprobados. Conservar caminar, piña, patada, guardia, especial, recibir golpe y KO. El retoque geométrico actual es provisorio.
-- [ ] Unificar el arte de habitación, fachada de Madero, interior del gimnasio y cuartito del pizarrón. Mejorar detalle, profundidad e iluminación de mañana/noche; mantener el barrio reconocible. Osvaldo debe tener un cuerpo coherente con su retrato.
+- [x] Habitación, interior del gimnasio y cuartito del pizarrón rehechos al nivel de la fachada (ventanas con luz, ring de fondo, estante de trofeos, pizarrón con tiza). Los fondos se dibujan una vez en un canvas auxiliar y se reutilizan. Pendiente: cuerpo de Osvaldo coherente con su retrato.
+- [x] Estación Villa Madero rehecha: skyline iluminado, techo con tubos, tren con puertas, baldosas y niebla. Se usa en el prólogo y en la revancha con Braian.
 - [ ] Mejorar las animaciones de pesas, cuerda, bolsa y técnica. Los objetos y el personaje aún tienen arte provisional aunque los ejercicios funcionan distinto.
-- [ ] Diferenciar los escenarios del circuito barrial, regional, argentino e internacional; evitar repetir el mismo ring en toda la campaña.
+- [x] Escenarios por circuito: Club Social (fechas 1–2), Polideportivo Municipal (3–4), estadio cubierto (5–6) y arena de Las Vegas (internacional). Multitudes estáticas por el caché de fondo; animarlas queda pendiente. Resultado y sábado usan el ring de esa pelea.
 - [ ] Pulir portada, escenas breves entre fechas e impactos/especial. La portada y la especial ya existen; falta llevar su acabado al nivel de los retratos.
 
 Los retratos detallados están integrados. Las correcciones de teclado, foco y pantalla móvil no completan estos pendientes de arte.

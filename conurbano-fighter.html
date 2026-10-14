@@ -659,7 +659,7 @@
     quotePlayer:'Dejá pasar, loco. Vengo de cursar y laburar.',quoteEnemy:'¡Entregá la mochila!'
   },...fightData.map(([id,name,subtitle,hp,atk,speed,style],i)=>({
     id,name,subtitle,hp:Math.round(hp*(i===6?1:2.8)),atk,speed,style,portrait:id,
-    stage:i>=7?'ufc_octagon':'gym_ring',isPrologue:false,color:['#a65b24','#7949aa','#238786','#a93434'][i%4],capColor:null,
+    stage:i>=7?'arena_ring':i===6?'madero':i>=4?'estadio_ring':i>=2?'poli_ring':'club_ring',isPrologue:false,color:['#a65b24','#7949aa','#238786','#a93434'][i%4],capColor:null,
     official:i!==6,international:i>=7,purse:i>=7?650+(i-7)*220:160+i*65,
     quotePlayer:i===6?'Esta vez de frente, Braian. Y acá termina.':'Otra semana de trabajo. Vamos al ring.',quoteEnemy:'Acá se demuestra lo que entrenaste.'
   }))];
@@ -1158,7 +1158,7 @@
       if (vsTimer <= 0) {
         setupFight(currentFightIndex);
         gameState = STATE.FIGHT;
-        focusArena();startBGM(FIGHTS[currentFightIndex].stage === 'ufc_octagon' ? 'ufc' : 'madero');
+        focusArena();startBGM(FIGHTS[currentFightIndex].international ? 'ufc' : 'madero');
       }
       return;
     }
@@ -1338,26 +1338,105 @@
   // ========================================================
   // 9. RENDERIZADO 16-BIT (ESCENARIOS, PANTALLA VS Y SPRITES)
   // ========================================================
+  // Los fondos se dibujan una vez en un canvas auxiliar y se reutilizan por cuadro.
+  const stageCache={};
+  function stageLayer(key,painter){
+    if(stageCache[key])return stageCache[key];
+    const layer=document.createElement('canvas');layer.width=640;layer.height=400;
+    const g=layer.getContext('2d');g.imageSmoothingEnabled=false;painter(g);
+    return stageCache[key]=layer;
+  }
+  // Generador determinista para multitudes y detalles repetidos: el fondo no cambia entre cuadros.
+  function seeded(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  function paintCrowd(g,x0,x1,y0,rows,seed,dark){
+    const rnd=seeded(seed);
+    const skins=['#d8a57a','#b97d55','#8c5a3a','#e8bb93','#6f4330'],shirts=['#c23a3a','#2f4f9f','#e5e1d4','#2b2b33','#d8b63c','#3f7f4e','#7a3f8f','#d16a2a'];
+    for(let r=0;r<rows;r++){
+      const y=y0+r*12,fade=dark?.45+r*.18:1;
+      for(let x=x0+(r%2)*7;x<x1;x+=14){
+        const bob=Math.floor(rnd()*3);
+        g.globalAlpha=Math.min(1,fade);
+        g.fillStyle=shirts[Math.floor(rnd()*shirts.length)];g.fillRect(x-5,y+7-bob,11,9);
+        g.fillStyle=skins[Math.floor(rnd()*skins.length)];g.fillRect(x-3,y-bob,7,8);
+        g.fillStyle='#1f1a1a';g.fillRect(x-3,y-bob-2,7,3);
+      }
+    }
+    g.globalAlpha=1;
+  }
+  function paintSkyline(g,y,color,seed,lit){
+    const rnd=seeded(seed);let x=-10;
+    while(x<650){
+      const w=24+Math.floor(rnd()*40),h=30+Math.floor(rnd()*80);
+      g.fillStyle=color;g.fillRect(x,y-h,w,h+6);
+      if(rnd()>.6){g.fillRect(x+w/2-3,y-h-10,6,10);}
+      if(lit)for(let wy=y-h+6;wy<y-6;wy+=9)for(let wx=x+4;wx<x+w-5;wx+=8)if(rnd()>.55){g.fillStyle=rnd()>.5?'#ffd36b':'#f4e6b4';g.fillRect(wx,wy,4,5);}
+      x+=w+2+Math.floor(rnd()*6);
+    }
+  }
+  function paintRing(g,canvasColor,ropes,apronColor,postColor){
+    // Cuerdas, esquineros y lona; los peleadores se dibujan encima desde y=310.
+    g.fillStyle=canvasColor;g.fillRect(0,258,640,142);
+    g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,258,640,6);
+    for(let x=0;x<640;x+=80){g.fillStyle='rgba(255,255,255,.04)';g.fillRect(x,264,40,136);}
+    g.fillStyle=apronColor;g.fillRect(0,372,640,28);g.fillStyle='rgba(0,0,0,.3)';g.fillRect(0,372,640,3);
+    ropes.forEach((c,i)=>{const y=[192,219,246][i];g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,y+5,640,3);g.fillStyle=c;g.fillRect(0,y,640,6);g.fillStyle='rgba(255,255,255,.35)';g.fillRect(0,y,640,2);});
+    for(const x of [14,614]){g.fillStyle='#1b1b22';g.fillRect(x-1,178,14,90);g.fillStyle=postColor;g.fillRect(x+1,180,10,86);g.fillStyle='rgba(255,255,255,.25)';g.fillRect(x+2,180,3,86);
+      for(const y of [189,216,243]){g.fillStyle='#d9d4c6';g.fillRect(x-4,y-2,20,10);g.fillStyle='#8c877b';g.fillRect(x-4,y+6,20,2);}}
+  }
+  function paintLightCone(g,x,y,w,h,color,alpha){
+    const grad=g.createLinearGradient(0,y,0,y+h);grad.addColorStop(0,color.replace('A',alpha));grad.addColorStop(1,color.replace('A',0));
+    g.fillStyle=grad;g.beginPath();g.moveTo(x-6,y);g.lineTo(x+6,y);g.lineTo(x+w/2,y+h);g.lineTo(x-w/2,y+h);g.closePath();g.fill();
+  }
+  function paintBanner(g,x,y,w,h,bg,fg,text,size){
+    g.fillStyle='rgba(0,0,0,.35)';g.fillRect(x+3,y+3,w,h);g.fillStyle=bg;g.fillRect(x,y,w,h);g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=2;g.strokeRect(x+2,y+2,w-4,h-4);
+    g.fillStyle=fg;g.font=`bold ${size||11}px monospace`;g.textAlign='center';g.fillText(text,x+w/2,y+h/2+size*.36);
+  }
+
   function drawStageBackground(stage) {
+    const rect=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
     if(stage === 'bedroom') {
-      ctx.fillStyle='#343d57';ctx.fillRect(0,0,640,400);
-      ctx.fillStyle='#242b40';ctx.fillRect(0,155,640,115);
-      ctx.fillStyle='#624b3a';ctx.fillRect(0,270,640,130);
-      ctx.strokeStyle='#423327';for(let x=0;x<640;x+=64){ctx.beginPath();ctx.moveTo(x,270);ctx.lineTo(x-40,400);ctx.stroke();}
-      ctx.fillStyle='#101c35';ctx.fillRect(62,35,115,108);ctx.strokeStyle='#8f929c';ctx.lineWidth=5;ctx.strokeRect(62,35,115,108);
-      ctx.fillStyle='#d9d9af';ctx.fillRect(130,53,14,14);ctx.fillStyle='#666d89';ctx.fillRect(115,35,5,108);
-      ctx.fillStyle='#54453e';ctx.fillRect(220,145,210,110);
-      ctx.fillStyle='#9b9caa';ctx.fillRect(216,204,220,42);ctx.fillStyle='#354f72';ctx.fillRect(215,231,225,30);
-      ctx.fillStyle='#d6d0bb';ctx.fillRect(235,206,60,19);
-      ctx.fillStyle='#685343';ctx.fillRect(470,196,75,67);
-      ctx.fillStyle='#e4bf75';ctx.fillRect(500,165,6,31);ctx.fillStyle='#bb8f4f';ctx.fillRect(484,148,39,20);
+      ctx.drawImage(stageLayer('bedroom',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Pared revocada con humedad, zócalo y piso de parquet gastado.
+        r(0,0,640,270,'#5c6678');r(0,0,640,8,'#3f4756');
+        for(let i=0;i<40;i++){const rnd=seeded(i*7+3);r(Math.floor(rnd()*640),Math.floor(rnd()*240),20+rnd()*30,6+rnd()*10,'rgba(70,78,92,.5)');}
+        r(0,262,640,10,'#3a3630');r(0,272,640,128,'#6a5140');
+        for(let y=272;y<400;y+=16){for(let x=((y/16)%2)*40-40;x<640;x+=80){r(x,y,78,14,(x/80+y/16)%3?'#705644':'#61483a');}}
+        r(0,272,640,2,'#2d2520');
+        // Ventana nocturna con reja: el barrio, un poste y un farol.
+        r(58,30,124,116,'#8e949e');r(64,36,112,104,'#0d1830');
+        const sky=g.createLinearGradient(0,36,0,140);sky.addColorStop(0,'#0f1a36');sky.addColorStop(1,'#3b3350');g.fillStyle=sky;g.fillRect(64,36,112,104);
+        r(64,98,112,42,'#1b1f2c');r(70,80,30,60,'#26283a');r(104,86,44,54,'#2a2c3c');r(150,74,26,66,'#22243a');
+        r(110,96,8,10,'#f4d58a');r(130,96,8,10,'#f4d58a');r(160,100,6,9,'#f1cd7a');r(80,92,7,8,'#e9c070');
+        r(96,40,3,100,'#15182a');r(94,40,8,4,'#f7e2a8');paintLightCone(g,98,44,60,96,'rgba(255,225,150,A)',.22);
+        for(let x=70;x<176;x+=18)r(x,36,2,104,'#555c66');r(64,88,112,2,'#555c66');
+        r(52,146,136,6,'#6b7079');r(52,24,136,6,'#6b7079');
+        // Cortina, póster de boxeo y estante con trofeo de potrero.
+        r(176,28,20,122,'#7a3b3b');r(180,28,4,122,'#5e2c2c');
+        r(250,42,74,96,'#2a2a30');r(254,46,66,88,'#c9b98a');r(258,50,58,52,'#7a2b2b');r(272,60,30,36,'#d8a078');r(266,62,10,28,'#d8a078');r(302,64,10,26,'#d8a078');
+        g.fillStyle='#2a2a30';g.font='bold 8px monospace';g.textAlign='center';g.fillText('BOXEO',287,114);g.fillText('MADERO 1987',287,126);
+        r(420,96,110,6,'#4f3a2a');r(470,74,14,22,'#d2a83e');r(464,70,26,6,'#d2a83e');r(474,92,6,6,'#8d6b25');r(432,78,18,18,'#444a55');
+        // Cama con frazada de cuadros, almohada y la mochila que ya no está.
+        r(214,150,222,112,'#4a3b2e');r(220,156,210,32,'#9ca2aa');r(220,188,210,70,'#2f4d7a');
+        for(let y=190;y<256;y+=14)for(let x=222;x<428;x+=16)if(((x+y)/14|0)%2)r(x,y,14,12,'#39598a');
+        r(236,160,66,22,'#e6e0cc');r(214,254,222,10,'#2d241c');r(216,262,8,16,'#3d3127');r(426,262,8,16,'#3d3127');
+        // Mesa con velador, cuaderno de la facultad y silla.
+        r(470,186,96,8,'#6c4c33');r(474,194,6,66,'#5a3f2b');r(556,194,6,66,'#5a3f2b');
+        r(500,150,30,22,'#d9b36a');r(513,172,4,14,'#8b6a3c');paintLightCone(g,515,172,90,90,'rgba(255,215,140,A)',.25);
+        r(480,176,34,10,'#e8e2d0');r(482,178,30,2,'#8a8370');r(482,182,30,2,'#8a8370');
+        r(600,170,34,90,'#5a3f2b');r(604,174,26,40,'#6c4c33');r(602,214,30,6,'#6c4c33');
+        // Sombra ambiente: luz cálida del velador y azul de la ventana.
+        const amb=g.createRadialGradient(515,200,20,515,200,260);amb.addColorStop(0,'rgba(255,200,120,.16)');amb.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=amb;g.fillRect(0,0,640,400);
+        const win=g.createRadialGradient(120,100,20,120,100,220);win.addColorStop(0,'rgba(120,160,255,.12)');win.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=win;g.fillRect(0,0,640,400);
+      }),0,0);
       drawFighterSprite({x:330,y:286,dir:1,state:'seated'},true,'#4a525d',null);
       return;
     }
     if(stage === 'gym_outside') {
       const night=gameState===STATE.TRAIN_TRAVEL&&travelMode==='exit';
-      const sky=ctx.createLinearGradient(0,0,0,210);sky.addColorStop(0,night?'#132038':'#75a8b8');sky.addColorStop(1,night?'#615573':'#eac8a0');ctx.fillStyle=sky;ctx.fillRect(0,0,640,400);
-      function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+      ctx.drawImage(stageLayer('gym_outside_'+(night?'n':'d'),g=>{
+      const sky=g.createLinearGradient(0,0,0,210);sky.addColorStop(0,night?'#132038':'#75a8b8');sky.addColorStop(1,night?'#615573':'#eac8a0');g.fillStyle=sky;g.fillRect(0,0,640,400);
+      function rect(x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h);}
       // Medianeras, terrazas y tanques sobre una cuadra del barrio.
       rect(0,86,104,230,'#9a8775');rect(104,70,120,246,'#b19d7f');rect(225,114,70,202,'#827c70');
       rect(7,78,98,10,'#57514a');rect(102,63,124,10,'#7f6c57');
@@ -1370,149 +1449,178 @@
       rect(288,94,323,226,'#a5886a');rect(287,86,328,12,'#5b4a3e');rect(298,155,288,156,'#b0a28a');
       for(let row=0;row<6;row++)for(let col=0;col<14;col++){const x=290+col*23+(row%2)*11;if(x<608)rect(x,100+row*8,21,6,(col+row)%3?'#8c5843':'#a36d50');}
       rect(295,144,314,9,'#514a41');rect(312,163,111,22,'#1d3c3b');
-      ctx.fillStyle='#e4dbb9';ctx.font='bold 12px monospace';ctx.textAlign='center';ctx.fillText('BOXEO · MMA',367,179);
+      g.fillStyle='#e4dbb9';g.font='bold 12px monospace';g.textAlign='center';g.fillText('BOXEO · MMA',367,179);
       rect(314,191,106,103,'#454f4a');for(let y=198;y<293;y+=6)rect(318,y,98,2,'#6f7971');
       rect(442,167,99,151,'#4b4439');rect(451,177,81,141,night?'#a7864c':'#242d2b');
       rect(455,178,71,16,night?'#d7b46d':'#756851');rect(438,313,108,7,'#766757');
       rect(548,180,39,95,'#62594d');rect(553,185,29,82,'#b6aa87');rect(567,185,3,82,'#504b43');
       // Cartel pintado a mano, toldo y huellas de desgaste.
-      rect(307,108,286,35,'#d1bc87');ctx.fillStyle='#403b2c';ctx.font='bold 15px monospace';ctx.fillText('DON OSVALDO',450,129);
-      ctx.font='10px monospace';ctx.fillText('CLUB DE BOXEO · VILLA MADERO',450,141);
+      rect(307,108,286,35,'#d1bc87');g.fillStyle='#403b2c';g.font='bold 15px monospace';g.fillText('DON OSVALDO',450,129);
+      g.font='10px monospace';g.fillText('CLUB DE BOXEO · VILLA MADERO',450,141);
       for(const [x,y,w,h] of [[299,255,12,25],[586,291,18,19],[427,177,6,41],[310,301,49,6]])rect(x,y,w,h,'#817663');
-      ctx.strokeStyle='#6c6356';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(581,155);ctx.lineTo(575,168);ctx.lineTo(582,180);ctx.stroke();
+      g.strokeStyle='#6c6356';g.lineWidth=2;g.beginPath();g.moveTo(581,155);g.lineTo(575,168);g.lineTo(582,180);g.stroke();
       // Vereda, cordón, asfalto, poste y cables.
       rect(0,320,640,36,'#a39b8b');for(let x=0;x<640;x+=39){rect(x,321,1,34,'#776f62');}rect(0,338,640,1,'#7b7366');
       rect(0,355,640,7,'#6c675e');rect(0,362,640,38,'#424950');rect(15,385,77,3,'#7b7b72');rect(558,373,35,3,'#77776c');
       rect(244,32,8,325,'#615644');rect(237,31,23,8,'#4e493e');rect(246,75,24,4,'#4f4c40');rect(268,76,16,5,night?'#f5d191':'#aaa38e');
-      ctx.strokeStyle=night?'#151d2a':'#3a4648';ctx.lineWidth=2;for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(0,18+i*10);ctx.quadraticCurveTo(240,75+i*7,640,26+i*12);ctx.stroke();}
+      g.strokeStyle=night?'#151d2a':'#3a4648';g.lineWidth=2;for(let i=0;i<4;i++){g.beginPath();g.moveTo(0,18+i*10);g.quadraticCurveTo(240,75+i*7,640,26+i*12);g.stroke();}
       // Árbol a un costado, maceta y bicicleta junto a la persiana.
-      rect(17,230,8,99,'#655540');for(const [x,y,r] of [[18,221,26],[39,233,19],[0,242,25]]){ctx.fillStyle=night?'#203e36':'#4f7250';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+      rect(17,230,8,99,'#655540');for(const [x,y,r] of [[18,221,26],[39,233,19],[0,242,25]]){g.fillStyle=night?'#203e36':'#4f7250';g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();}
       rect(570,307,22,14,'#93694e');rect(580,285,4,26,'#3c6042');rect(570,294,26,6,'#4c7653');
-      ctx.strokeStyle='#333d40';ctx.lineWidth=2;for(let x of [147,190]){ctx.beginPath();ctx.arc(x,308,12,0,Math.PI*2);ctx.stroke();}ctx.beginPath();ctx.moveTo(147,308);ctx.lineTo(166,286);ctx.lineTo(178,308);ctx.lineTo(147,308);ctx.lineTo(181,292);ctx.lineTo(190,308);ctx.moveTo(181,292);ctx.lineTo(181,282);ctx.lineTo(188,282);ctx.stroke();
-      ctx.fillStyle='#cab98f';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText('MADERO',43,292);
-      if(night){ctx.fillStyle='rgba(7,14,31,.32)';ctx.fillRect(0,0,640,345);ctx.fillStyle='#f0deb1';ctx.fillRect(80,20,12,12);}
+      g.strokeStyle='#333d40';g.lineWidth=2;for(let x of [147,190]){g.beginPath();g.arc(x,308,12,0,Math.PI*2);g.stroke();}g.beginPath();g.moveTo(147,308);g.lineTo(166,286);g.lineTo(178,308);g.lineTo(147,308);g.lineTo(181,292);g.lineTo(190,308);g.moveTo(181,292);g.lineTo(181,282);g.lineTo(188,282);g.stroke();
+      g.fillStyle='#cab98f';g.font='10px monospace';g.textAlign='left';g.fillText('MADERO',43,292);
+      if(night){g.fillStyle='rgba(7,14,31,.32)';g.fillRect(0,0,640,345);g.fillStyle='#f0deb1';g.fillRect(80,20,12,12);paintLightCone(g,276,80,150,260,'rgba(255,220,150,A)',.18);paintLightCone(g,491,186,120,140,'rgba(255,200,120,A)',.14);}
+      }),0,0);
       return;
     }
     if(stage === 'gym_interior') {
-      ctx.fillStyle='#69604f';ctx.fillRect(0,0,640,400);
-      ctx.fillStyle='#3e413c';ctx.fillRect(0,140,640,160);
-      ctx.fillStyle='#453d36';ctx.fillRect(0,300,640,100);
-      ctx.fillStyle='#c6b57d';ctx.fillRect(140,25,360,43);
-      ctx.fillStyle='#25251f';ctx.textAlign='center';ctx.font='18px monospace';ctx.fillText('GIMNASIO MADERO · DON OSVALDO',320,52);
-      ctx.fillStyle='#222';ctx.fillRect(80,68,4,55);ctx.fillStyle='#9c3430';ctx.fillRect(60,123,45,110);
-      ctx.fillStyle='#141619';ctx.fillRect(440,225,145,9);ctx.fillRect(465,207,13,45);ctx.fillRect(540,207,13,45);
-      ctx.strokeStyle='#aba28b';ctx.lineWidth=3;ctx.strokeRect(330,90,200,100);
-      ctx.fillStyle='#7a5d3e';ctx.fillRect(200,258,140,20);
+      ctx.drawImage(stageLayer('gym_interior',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Ladrillo pintado a media altura, friso azul y techo de chapa con tirantes.
+        r(0,0,640,300,'#8e8470');r(0,0,640,60,'#4b4a46');for(let x=0;x<640;x+=40)r(x,0,2,60,'#2f2e2b');r(0,58,640,6,'#2f2e2b');
+        for(let row=0;row<30;row++)for(let col=0;col<24;col++){const x=col*28+(row%2)*14-14;r(x,64+row*8,26,6,(col*3+row)%5?'#9c8f78':'#8a7d68');}
+        r(0,176,640,6,'#2c4a6a');r(0,182,640,118,'#3e5f82');for(let row=0;row<15;row++)for(let col=0;col<24;col++){const x=col*28+(row%2)*14-14;r(x,184+row*8,26,6,(col*5+row)%4?'#43658a':'#3a5a7c');}
+        // Ventanales altos con luz de la mañana.
+        for(const x of [50,470]){r(x,70,120,70,'#2c2a28');for(let i=0;i<4;i++)for(let j=0;j<2;j++)r(x+4+i*29,74+j*33,26,30,j?'#9ec1c8':'#c9dde0');paintLightCone(g,x+60,140,260,170,'rgba(255,240,200,A)',.16);}
+        // Ring al fondo, bolsas colgadas, espejo y cartel del club.
+        r(206,88,230,60,'#1d1d22');g.fillStyle='#e5d7a6';g.font='bold 15px monospace';g.textAlign='center';g.fillText('GIMNASIO MADERO',321,112);g.font='10px monospace';g.fillText('DON OSVALDO · DESDE 1987',321,132);
+        r(200,232,240,10,'#d62424');r(200,252,240,8,'#eeeeee');r(200,271,240,8,'#1d4ed8');r(196,224,8,80,'#d9d4c6');r(436,224,8,80,'#d9d4c6');r(190,296,260,14,'#243a5a');
+        for(const x of [84,130]){r(x+6,64,3,52,'#2a2a2a');r(x,116,16,70,x===84?'#9c3430':'#2a2a30');r(x,112,16,6,'#6a6a6a');r(x,180,16,6,'#6a6a6a');}
+        r(520,170,100,110,'#8f9fa6');r(524,174,92,102,'#b9c8cc');r(528,178,84,94,'rgba(255,255,255,.12)');
+        for(const [x,y,w,h,c] of [[28,196,56,70,'#5b4e40'],[32,200,48,20,'#c23a3a'],[32,224,48,20,'#2f4f9f'],[32,248,48,14,'#d8b63c']])r(x,y,w,h,c);
+        // Piso de goma con líneas y equipo: pesas, banco y cuerdas tiradas.
+        r(0,300,640,100,'#3d3b36');for(let y=300;y<400;y+=20)for(let x=((y/20)%2)*30;x<640;x+=60)r(x,y,58,18,'#44423c');
+        r(0,300,640,3,'#23221f');r(100,330,440,4,'#6a6760');r(100,370,440,4,'#6a6760');
+        r(440,318,150,12,'#1c1c22');r(452,296,16,52,'#2a2a30');r(562,296,16,52,'#2a2a30');r(468,312,8,34,'#444');r(548,312,8,34,'#444');
+        r(60,336,100,10,'#7a5d3e');r(66,346,8,30,'#5a3f2b');r(146,346,8,30,'#5a3f2b');r(70,318,14,18,'#1b1b22');r(136,318,14,18,'#1b1b22');
+        g.strokeStyle='#d0c6a8';g.lineWidth=3;g.beginPath();g.moveTo(560,386);g.quadraticCurveTo(600,352,634,386);g.stroke();
+        g.fillStyle='rgba(0,0,0,.22)';g.fillRect(0,0,640,66);
+      }),0,0);
+      return;
+    }
+    if(stage === 'brief_room') {
+      ctx.drawImage(stageLayer('brief_room',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Cuartito del gimnasio: pared verde oscura, estante con trofeos, piso de cemento alisado.
+        r(0,0,640,285,'#5f6f5a');r(0,0,640,12,'#3d4a3a');for(let i=0;i<60;i++){const rnd=seeded(i*13+7);r(Math.floor(rnd()*640),Math.floor(rnd()*270),10+rnd()*24,3+rnd()*6,'rgba(70,85,66,.6)');}
+        r(0,278,640,8,'#2f3a2d');r(0,286,640,114,'#6b665c');for(let x=0;x<640;x+=80)r(x,286,1,114,'#565248');r(0,340,640,1,'#565248');
+        // Ventana chica con reja y luz del patio.
+        r(18,18,120,156,'#a59b79');r(26,28,105,134,'#c3d4d6');r(26,28,105,134,'rgba(60,90,80,.25)');for(let x=40;x<130;x+=18)r(x,28,2,134,'#55604f');r(26,92,105,2,'#55604f');
+        paintLightCone(g,78,162,150,130,'rgba(220,240,220,A)',.14);
+        // Estante con trofeos, guantes viejos y una foto enmarcada.
+        r(430,196,190,6,'#4a3a2a');r(438,166,14,30,'#d2a83e');r(432,162,26,6,'#d2a83e');r(468,176,10,20,'#b0b6bc');r(462,172,22,5,'#b0b6bc');
+        r(498,170,30,26,'#8f3b2f');r(528,172,30,24,'#8f3b2f');r(566,160,44,36,'#2b2b30');r(570,164,36,28,'#c9b98a');r(578,170,20,16,'#5a3f2b');
+        // Pizarrón grande con marco de madera y restos de tiza.
+        r(170,40,435,145,'#796042');r(178,48,419,129,'#183d32');for(let i=0;i<30;i++){const rnd=seeded(i*3+1);r(180+Math.floor(rnd()*410),50+Math.floor(rnd()*124),6+rnd()*16,1,'rgba(230,230,210,.18)');}
+        r(305,179,50,3,'#b3aa85');r(320,177,12,3,'#eee');r(270,180,20,3,'#eee');
+        // Mesa, silla plegable y un botiquín en la pared.
+        r(330,292,170,8,'#5a4532');r(336,300,6,54,'#4a3826');r(488,300,6,54,'#4a3826');r(350,276,60,16,'#e6e0cc');r(420,280,34,12,'#2d4a7a');
+        r(560,286,40,6,'#444a55');r(562,292,4,44,'#444a55');r(596,292,4,44,'#444a55');r(560,312,40,4,'#444a55');
+        r(146,70,24,30,'#e9e9e9');r(154,76,8,18,'#c23a3a');r(149,83,18,4,'#c23a3a');
+        g.fillStyle='rgba(0,0,0,.2)';g.fillRect(0,0,640,20);
+      }),0,0);
       return;
     }
 
     if (stage === 'madero') {
-      // Cielo nocturno Villa Madero
-      ctx.fillStyle = '#090d1a';
-      ctx.fillRect(0, 0, 640, 400);
-
-      // Techo del andén y columnas
-      ctx.fillStyle = '#182238';
-      ctx.fillRect(0, 40, 640, 35);
-      for (let x = 70; x < 640; x += 180) {
-        ctx.fillStyle = '#141b2d';
-        ctx.fillRect(x, 75, 18, 175);
-        // Faroles amarillos
-        ctx.fillStyle = '#ffcc44';
-        ctx.fillRect(x - 12, 72, 42, 8);
-      }
-
-      // Cartel clásico de estación "VILLA MADERO"
-      ctx.fillStyle = '#102a5c';
-      ctx.fillRect(215, 92, 210, 32);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(215, 92, 210, 32);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('VILLA MADERO', 320, 113);
-
-      // Tren Belgrano Sur de fondo
-      ctx.fillStyle = '#283d66';
-      ctx.fillRect(0, 155, 640, 88);
-      ctx.fillStyle = '#e69900';
-      ctx.fillRect(0, 212, 640, 12);
-      for (let wx = 25; wx < 620; wx += 65) {
-        ctx.fillStyle = '#ffdd77';
-        ctx.fillRect(wx, 170, 42, 32);
-      }
-
-      // Andén de baldosas
-      ctx.fillStyle = '#252836';
-      ctx.fillRect(0, 250, 640, 150);
-      ctx.fillStyle = '#d4a017'; // Línea amarilla de seguridad del andén
-      ctx.fillRect(0, 255, 640, 6);
-    } 
-    else if (stage === 'gym_ring') {
-      // Gimnasio Club Social Madero
-      ctx.fillStyle = '#381616';
-      ctx.fillRect(0, 0, 640, 400);
-      // Ladrillos
-      ctx.fillStyle = '#4d1f1f';
-      for (let y = 50; y < 250; y += 20) {
-        for (let x = (y % 40 === 0 ? 0 : 20); x < 640; x += 45) {
-          ctx.fillRect(x, y, 38, 14);
-        }
-      }
-      // Cartel Club Social
-      ctx.fillStyle = '#111';
-      ctx.fillRect(170, 80, 300, 34);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.strokeRect(170, 80, 300, 34);
-      ctx.fillStyle = '#ffcc00';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('CLUB SOCIAL MADERO', 320, 102);
-
-      // Cuerdas del Ring
-      ctx.fillStyle = '#d62424';
-      ctx.fillRect(0, 195, 640, 6);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 222, 640, 6);
-      ctx.fillStyle = '#1d4ed8';
-      ctx.fillRect(0, 248, 640, 6);
-
-      // Lona
-      ctx.fillStyle = '#22304a';
-      ctx.fillRect(0, 260, 640, 140);
-    } 
-    else {
-      // Octágono UFC en Las Vegas
-      ctx.fillStyle = '#080814';
-      ctx.fillRect(0, 0, 640, 400);
-      // Reflectores estadio
-      ctx.fillStyle = '#ffdd55';
-      for (let x = 60; x < 600; x += 120) {
-        ctx.fillRect(x, 55, 28, 10);
-      }
-      // Reja del Octágono
-      ctx.strokeStyle = '#444c5c';
-      ctx.lineWidth = 2;
-      for (let x = 0; x < 640; x += 24) {
-        ctx.beginPath();
-        ctx.moveTo(x, 140);
-        ctx.lineTo(x + 24, 260);
-        ctx.moveTo(x + 24, 140);
-        ctx.lineTo(x, 260);
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#111';
-      ctx.fillRect(0, 132, 640, 12);
-      ctx.fillStyle = '#d4af37';
-      ctx.font = '11px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('LIGA MUNDIAL DE KICKBOXING - LAS VEGAS', 320, 120);
-
-      // Lona del octágono
-      ctx.fillStyle = '#1e2430';
-      ctx.fillRect(0, 260, 640, 140);
+      ctx.drawImage(stageLayer('madero',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Cielo de madrugada sobre el conurbano: degradé, luna y antenas.
+        const sky=g.createLinearGradient(0,0,0,170);sky.addColorStop(0,'#070a18');sky.addColorStop(.6,'#1a1d3f');sky.addColorStop(1,'#5a3650');g.fillStyle=sky;g.fillRect(0,0,640,180);
+        const rnd=seeded(99);for(let i=0;i<40;i++)r(Math.floor(rnd()*640),Math.floor(rnd()*80),1,1,'#cfd6ff');
+        g.fillStyle='#f1e7c2';g.beginPath();g.arc(560,36,14,0,Math.PI*2);g.fill();g.fillStyle='#1a1d3f';g.beginPath();g.arc(566,32,12,0,Math.PI*2);g.fill();
+        paintSkyline(g,150,'#171a33',21,true);paintSkyline(g,164,'#101226',44,true);
+        for(const x of [80,330,520])r(x,96,2,54,'#1a1d30');
+        // Techo del andén con chapa, columnas de hierro y tubos fluorescentes.
+        r(0,30,640,8,'#2c3144');r(0,38,640,26,'#1f2334');for(let x=0;x<640;x+=18)r(x,40,2,22,'#2a2f44');r(0,64,640,4,'#3a4058');
+        for(const x of [70,250,430,610]){r(x-9,68,18,186,'#1b1f2e');r(x-6,68,4,186,'#2d3448');r(x-14,66,28,6,'#2d3448');r(x-16,250,32,6,'#2d3448');}
+        for(const x of [160,340,520]){r(x-26,66,52,6,'#4a4f66');r(x-24,72,48,4,'#fff3c4');paintLightCone(g,x,76,150,176,'rgba(255,240,190,A)',.16);}
+        // Cartel esmaltado de la estación.
+        r(214,88,212,36,'#0b2b70');r(218,92,204,28,'#113a8f');g.strokeStyle='#f1ede0';g.lineWidth=2;g.strokeRect(216,90,208,32);
+        g.fillStyle='#ffffff';g.font='bold 14px monospace';g.textAlign='center';g.fillText('VILLA MADERO',320,112);
+        // Formación del Belgrano Sur detenida: ventanas iluminadas, puertas y franja naranja.
+        r(0,150,640,100,'#2a3f6a');r(0,150,640,8,'#4b5f8a');r(0,158,640,4,'#1b2a4a');
+        for(let x=-10;x<640;x+=130){r(x,150,3,100,'#15213a');r(x+2,150,3,100,'#5d6f95');}
+        for(let wx=22;wx<640;wx+=130){for(let i=0;i<3;i++){r(wx+i*30,166,24,30,'#f2d88a');r(wx+i*30,166,24,10,'#fff2bf');r(wx+i*30+3,172,7,20,'#d8b968');}r(wx+96,164,26,70,'#1d2a48');r(wx+98,166,22,30,'#e8cf86');r(wx+108,166,2,66,'#0e1526');}
+        r(0,212,640,12,'#e69900');r(0,224,640,3,'#a86d00');r(0,236,640,14,'#1b2436');for(let x=0;x<640;x+=50)r(x+8,240,34,6,'#111826');
+        // Borde del andén, línea amarilla y baldosas podotáctiles.
+        r(0,250,640,8,'#4f5466');r(0,258,640,6,'#d4a017');for(let x=0;x<640;x+=12)r(x,264,10,6,'#7a7f90');
+        r(0,270,640,130,'#2b2d3c');for(let y=270;y<400;y+=20)for(let x=((y/20)%2)*20-20;x<640;x+=40)r(x,y,38,18,(x/40+y/20)%3?'#30323f':'#262836');
+        const rn2=seeded(5);for(let i=0;i<14;i++)r(Math.floor(rn2()*640),280+Math.floor(rn2()*110),14+rn2()*30,2,'#1c1e2a');
+        // Banco, tacho de basura, pegatinas y pintada en la columna.
+        r(486,228,70,8,'#6a5a3e');r(490,236,6,16,'#4a4030');r(546,236,6,16,'#4a4030');r(40,214,22,38,'#3f6a3f');r(38,210,26,6,'#2d4d2d');
+        // Niebla baja y vibración de luz fluorescente.
+        const fog=g.createLinearGradient(0,250,0,400);fog.addColorStop(0,'rgba(90,100,140,.12)');fog.addColorStop(1,'rgba(10,12,24,.35)');g.fillStyle=fog;g.fillRect(0,250,640,150);
+      }),0,0);
+      return;
     }
+    if (stage === 'club_ring') {
+      ctx.drawImage(stageLayer('club_ring',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Club Social Madero: ladrillo visto, banderines, lamparitas colgadas y vecinos en sillas plegables.
+        r(0,0,640,260,'#3a1b19');for(let row=0;row<26;row++)for(let col=0;col<24;col++){const x=col*30+(row%2)*15-15;r(x,row*10,28,8,(col*7+row)%4?'#4f2321':'#5a2a26');}
+        r(0,0,640,30,'#2a1414');for(let x=0;x<640;x+=90){r(x,26,3,36,'#1e1212');r(x-8,60,19,8,'#3a3a44');r(x-4,68,11,10,'#ffe9a0');paintLightCone(g,x+1,78,120,150,'rgba(255,225,160,A)',.14);}
+        for(let x=-10;x<640;x+=28){g.fillStyle=(x/28|0)%3===0?'#d4a017':(x/28|0)%3===1?'#1d4ed8':'#e5e1d4';g.beginPath();g.moveTo(x,34);g.lineTo(x+28,34);g.lineTo(x+14,54);g.closePath();g.fill();}
+        paintBanner(g,160,74,320,36,'#0d0d12','#ffcc00','CLUB SOCIAL MADERO',14);
+        paintBanner(g,30,116,110,26,'#1d3c3b','#e4dbb9','BOXEO · MMA',9);paintBanner(g,500,116,110,26,'#8f3b2f','#f3e9c8','PANADERÍA LA UNIÓN',8);
+        r(0,150,640,8,'#2a1414');
+        paintCrowd(g,10,630,164,3,7,false);
+        r(0,196,640,64,'#1e1216');for(let x=18;x<640;x+=32){r(x,236,22,22,'#3b3b44');r(x,236,22,4,'#5c5c66');}
+        paintRing(g,'#2d3b56',['#d62424','#eeeeee','#1d4ed8'],'#34203a','#d62424');
+        g.fillStyle='#8aa0c8';g.font='bold 22px monospace';g.textAlign='center';g.globalAlpha=.25;g.fillText('C.S.M.',320,345);g.globalAlpha=1;
+      }),0,0);
+      return;
+    }
+    if (stage === 'poli_ring') {
+      ctx.drawImage(stageLayer('poli_ring',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Polideportivo municipal: bloques pintados, tribuna tubular, reflectores de cancha y lonas de sponsors.
+        r(0,0,640,260,'#c9c3b2');for(let row=0;row<14;row++)for(let col=0;col<18;col++){const x=col*40+(row%2)*20-20;r(x,row*14,38,12,(col+row)%5?'#cfc9b8':'#c2bcab');}
+        r(0,0,640,70,'#3a4a5c');r(0,70,640,6,'#263340');for(let x=0;x<640;x+=64){r(x,0,4,70,'#2d3b4b');r(x+10,6,44,14,'#eef3ff');paintLightCone(g,x+32,20,160,220,'rgba(240,248,255,A)',.14);}
+        r(0,120,640,28,'#3a6ea5');r(0,144,640,4,'#2b4f78');g.fillStyle='#ffffff';g.font='bold 13px monospace';g.textAlign='center';g.fillText('POLIDEPORTIVO MUNICIPAL · LA MATANZA',320,139);
+        paintBanner(g,20,82,150,30,'#e5e1d4','#c23a3a','GOMERÍA RUTA 3',9);paintBanner(g,240,82,160,30,'#2f4f9f','#ffffff','CERVEZA DEL OESTE',9);paintBanner(g,470,82,150,30,'#d8b63c','#2b2b33','PANADERÍA LA UNIÓN',8);
+        for(let i=0;i<5;i++){r(0,152+i*22,640,20,i%2?'#8a8f99':'#9aa0ab');r(0,170+i*22,640,2,'#5f6670');}
+        paintCrowd(g,8,632,150,5,31,false);
+        r(0,250,640,10,'#6a7180');for(let x=0;x<640;x+=40)r(x,250,2,10,'#4a5160');
+        paintRing(g,'#5b6b86',['#1d4ed8','#eeeeee','#1d4ed8'],'#2b3a5a','#1d4ed8');
+        g.fillStyle='#ffffff';g.font='bold 20px monospace';g.textAlign='center';g.globalAlpha=.2;g.fillText('MUNICIPALIDAD',320,348);g.globalAlpha=1;
+      }),0,0);
+      return;
+    }
+    if (stage === 'estadio_ring') {
+      ctx.drawImage(stageLayer('estadio_ring',g=>{
+        const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+        // Estadio cubierto: oscuridad, tribuna alta llena, pantalla gigante y batería de reflectores.
+        r(0,0,640,260,'#0a0b14');
+        const rnd=seeded(3);for(let i=0;i<220;i++){const x=Math.floor(rnd()*640),y=70+Math.floor(rnd()*110);r(x,y,2,2,rnd()>.9?'#ffffff':'#53537a');}
+        r(0,0,640,40,'#15161f');r(0,40,640,4,'#2a2b38');for(let x=40;x<640;x+=70){r(x-14,20,28,18,'#2b2c36');r(x-10,24,20,10,'#fff7d6');paintLightCone(g,x,38,170,260,'rgba(255,250,220,A)',.13);}
+        r(220,52,200,58,'#101018');r(224,56,192,50,'#1b1b2a');g.fillStyle='#ffcc00';g.font='bold 14px monospace';g.textAlign='center';g.fillText('CAMPEONATO ARGENTINO',320,76);g.fillStyle='#7dd3fc';g.font='10px monospace';g.fillText('NOCHE DE TÍTULO · BUENOS AIRES',320,96);
+        for(let i=0;i<4;i++)r(0,116+i*28,640,2,'#2b2b3a');
+        paintCrowd(g,6,634,120,8,55,true);
+        r(0,236,640,24,'#15161f');r(0,236,640,4,'#2a2b3a');for(let x=0;x<640;x+=80){r(x+10,244,60,8,'#1d1d2a');}
+        paintBanner(g,30,232,120,22,'#1d4ed8','#ffffff','CERVEZA DEL OESTE',8);paintBanner(g,490,232,120,22,'#c23a3a','#ffffff','GOMERÍA RUTA 3',8);
+        paintRing(g,'#1e2a44',['#ffffff','#d62424','#ffffff'],'#101424','#eeeeee');
+        g.fillStyle='#ffcc00';g.font='bold 24px monospace';g.textAlign='center';g.globalAlpha=.22;g.fillText('ARGENTINA',320,346);g.globalAlpha=1;
+        const spot=g.createRadialGradient(320,300,40,320,300,330);spot.addColorStop(0,'rgba(255,250,220,.14)');spot.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=spot;g.fillRect(0,0,640,400);
+      }),0,0);
+      return;
+    }
+    // Arena internacional (antes 'ufc_octagon').
+    ctx.drawImage(stageLayer('arena_ring',g=>{
+      const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
+      // Arena de Las Vegas: pantallas LED, humo, tribuna gigante y parrilla de luces de colores.
+      r(0,0,640,260,'#05050c');
+      const rnd=seeded(8);for(let i=0;i<300;i++){const x=Math.floor(rnd()*640),y=60+Math.floor(rnd()*120);r(x,y,2,2,rnd()>.92?'#ffffff':'#3b3b66');}
+      r(0,0,640,34,'#0f0f1a');for(let x=20;x<640;x+=52){const i=(x/52|0)%4,c=['#ff3b6b','#3bc0ff','#ffd23b','#9b5cff'][i],cone=['rgba(255,59,107,A)','rgba(59,192,255,A)','rgba(255,210,59,A)','rgba(155,92,255,A)'][i];r(x-8,14,16,14,'#20202c');r(x-5,18,10,8,c);paintLightCone(g,x,30,120,250,cone,.1);}
+      r(0,70,640,30,'#0b1120');for(let x=0;x<640;x+=4)for(let y=72;y<98;y+=4)r(x,y,3,3,(x/4+y/4)%7===0?'#ff3b6b':(x/4+y/4)%11===0?'#3bc0ff':'#121b33');
+      g.fillStyle='#ffffff';g.font='bold 14px monospace';g.textAlign='center';g.fillText('LIGA MUNDIAL DE KICKBOXING · LAS VEGAS',320,90);
+      paintCrowd(g,6,634,110,9,77,true);
+      r(0,216,640,44,'#0d0f1c');for(let x=0;x<640;x+=4)for(let y=220;y<256;y+=4)r(x,y,3,3,(x/4|0)%40<20?'#1b2b5c':'#5c1b2b');
+      g.fillStyle='#ffffff';g.font='bold 18px monospace';g.fillText('WORLD TITLE · CINTURÓN',320,243);
+      paintRing(g,'#e9e4d6',['#d62424','#1d4ed8','#d62424'],'#111120','#111120');
+      g.fillStyle='#0f1a3a';g.font='bold 26px monospace';g.textAlign='center';g.globalAlpha=.18;g.fillText('WKL',320,348);g.globalAlpha=1;
+      const haze=g.createLinearGradient(0,60,0,260);haze.addColorStop(0,'rgba(90,60,140,.18)');haze.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=haze;g.fillRect(0,60,640,200);
+    }),0,0);
   }
 
   function drawFighterSprite(f, isPlayer, topColor, capColor) {
@@ -1814,22 +1922,13 @@
 
     if(gameState===STATE.BRIEF){
       const rival=FIGHTS[currentFightIndex];
-      ctx.fillStyle='#77725d';ctx.fillRect(0,0,640,400);
-      ctx.fillStyle='#545747';ctx.fillRect(0,135,640,150);
-      ctx.fillStyle='#514434';ctx.fillRect(0,285,640,115);
-      ctx.fillStyle='#a59b79';ctx.fillRect(18,18,120,156);
-      ctx.fillStyle='#343d3b';ctx.fillRect(26,28,105,134);
-      ctx.fillStyle='#9d9881';ctx.fillRect(32,32,93,60);
-      ctx.fillStyle='#bdc2aa';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText('BOXEO',78,57);ctx.fillText('MADERO',78,76);
-      ctx.fillStyle='#796042';ctx.fillRect(170,40,435,145);
-      ctx.fillStyle='#183d32';ctx.fillRect(178,48,419,129);
+      drawStageBackground('brief_room');
       ctx.drawImage(getPortraitCanvas(rival.portrait),510,68,80,80);
       ctx.fillStyle='#e2e7ca';ctx.textAlign='left';ctx.font='14px monospace';
       ctx.fillText(`SÁBADO: ${rival.name}`,195,72);
       ctx.font='11px monospace';
       const rows=[['RESISTENCIA',Math.min(1,rival.hp/1820)],['PEGADA',Math.min(1,rival.atk/27)],['VELOCIDAD',Math.min(1,rival.speed/2.65)]];
       rows.forEach(([label,value],i)=>{const y=99+i*25;ctx.fillStyle='#e2e7ca';ctx.fillText(label+(i===0?' '+rival.hp:i===1?' '+rival.atk:' '+rival.speed.toFixed(2)),195,y);ctx.strokeStyle='#aebc9c';ctx.strokeRect(320,y-10,143,10);ctx.fillStyle='#c7d3b0';ctx.fillRect(321,y-9,141*value,8);});
-      ctx.fillStyle='#b3aa85';ctx.fillRect(305,179,50,3);ctx.fillStyle='#eee';ctx.fillRect(320,177,12,3);
       drawFighterSprite({x:120,y:284,dir:1,state:'idle',coach:true},false,'#222a32',null);
       const pointing=Date.now()/1500%3;
       const targetY=96+Math.floor(pointing)*25;
@@ -1847,7 +1946,7 @@
     }
 
     if(gameState === STATE.WEEK_RESULT){
-      drawStageBackground('gym_ring');
+      drawStageBackground(FIGHTS[weekResult.index].stage);
       ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);
       drawFighterSprite({x:260,y:290,dir:1,state:'idle'},true,'#4a525d',null);
       drawFighterSprite({x:380,y:290,dir:-1,state:'idle'},false,'#e5d3b7',null);
@@ -1909,7 +2008,7 @@
 
     // --- 6. GIMNASIO DE ENTRENAMIENTO (ELECCIÓN DE STATS + MINIJUEGO) ---
     if(gameState===STATE.GYM && playerStats.trainsLeft===0){
-      drawStageBackground('gym_ring');ctx.fillStyle='rgba(8,12,22,.87)';ctx.fillRect(0,0,640,400);
+      drawStageBackground(FIGHTS[currentFightIndex].stage);ctx.fillStyle='rgba(8,12,22,.87)';ctx.fillRect(0,0,640,400);
       ctx.drawImage(getPortraitCanvas('lautaro'),25,22,74,74);
       ctx.drawImage(getPortraitCanvas(FIGHTS[currentFightIndex].portrait),541,22,74,74);
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 18px monospace';ctx.fillText('SÁBADO · DÍA DE PELEA',320,45);
@@ -2071,7 +2170,7 @@
 
     // --- 7. FINAL CAMPEÓN MUNDIAL UFC ---
     if (gameState === STATE.VICTORY_FINAL) {
-      drawStageBackground('ufc_octagon');
+      drawStageBackground('arena_ring');
       ctx.fillStyle = 'rgba(0,0,0,0.82)';
       ctx.fillRect(0, 0, 640, 400);
 
