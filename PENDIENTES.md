@@ -27,9 +27,18 @@ Leer este archivo y el código. Eliminar una tarea sólo cuando esté implementa
 
 Corregido: activación nativa con espacio/Enter, foco de la casilla de rutina, captura y cancelación del toque, desplazamiento automático a la arena y composición de combate horizontal. Condición del personaje visible antes de elegir actividad; catálogo permanente plegable para reducir el scroll.
 
-## Pendientes
+## Mejoras visuales pendientes — orden de trabajo
+- [ ] Rehacer los cuerpos de los peleadores: sprites más detallados y coherentes con los retratos aprobados. Conservar caminar, piña, patada, guardia, especial, recibir golpe y KO. El retoque geométrico actual es provisorio.
+- [ ] Unificar el arte de habitación, fachada de Madero, interior del gimnasio y cuartito del pizarrón. Mejorar detalle, profundidad e iluminación de mañana/noche; mantener el barrio reconocible. Osvaldo debe tener un cuerpo coherente con su retrato.
+- [ ] Mejorar las animaciones de pesas, cuerda, bolsa y técnica. Los objetos y el personaje aún tienen arte provisional aunque los ejercicios funcionan distinto.
+- [ ] Diferenciar los escenarios del circuito barrial, regional, argentino e internacional; evitar repetir el mismo ring en toda la campaña.
+- [ ] Pulir portada, escenas breves entre fechas e impactos/especial. La portada y la especial ya existen; falta llevar su acabado al nivel de los retratos.
+
+Los retratos detallados están integrados. Las correcciones de teclado, foco y pantalla móvil no completan estos pendientes de arte.
+
+## Verificación pendiente con jugadores
 - [ ] Evaluar diversión y dificultad con una persona jugando la campaña. Registrar rival, stats, fatiga y resultado antes de ajustar números.
 - [ ] Comprobar respuesta y ergonomía en un teléfono físico. La emulación táctil y las capturas verifican geometría y eventos, pero no dedos, latencia y rendimiento del aparato.
 
 ## Siguiente paso
-Probar el juego en el teléfono y contrastar las primeras tres fechas con los resultados anteriores. Completar la campaña con una persona para detectar repeticiones o saltos de dificultad que las simulaciones no evalúan.
+Empezar por los sprites de combate y revisar una pelea con los retratos actuales. Después seguir con escenarios y ejercicios. Mantener las pruebas de dificultad y teléfono físico como verificaciones separadas.
