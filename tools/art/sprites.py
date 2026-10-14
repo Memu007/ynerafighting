@@ -22,6 +22,9 @@ OUT = Path(__file__).resolve().parents[2] / "assets" / "sprites"
 base.W, base.H = CW, CH    # Lienzo usa las globales del módulo al dibujar
 
 ORDEN_POSES = ["guardia", "paso1", "paso2", "pina", "patada", "bloqueo", "golpe", "ko", "especial", "sentado", "senala"]
+# Poses de entrenamiento: sólo las tienen Lautaro (ring) y Osvaldo; van después de las comunes para no mover índices.
+POSES_ENTRENAMIENTO = ["pesas_abajo", "pesas_arriba", "soga", "salto", "manoplas"]
+CON_ENTRENAMIENTO = ("lautaro", "osvaldo")
 
 
 # ---------------------------------------------------------------- color
@@ -123,7 +126,49 @@ POSES = {
     "senala": dict(G, hombro_b=(34, 40), codo_b=(30, 62), muneca_b=(32, 80), puno_b=(34, 88),
                    hombro_f=(65, 40), codo_f=(80, 30), muneca_f=(92, 22), puno_f=(98, 18),
                    rodilla_b=(36, 102), tobillo_b=(34, 123), punta_b=(42, 126), rodilla_f=(64, 102), tobillo_f=(66, 123), punta_f=(74, 126)),
+    # Entrenamiento. `equipo` agrega la barra, las manijas de la soga o las manoplas en las manos; `sin_guantes` quita los guantes.
+    "pesas_abajo": dict(G, hombro_b=(34, 42), codo_b=(26, 60), muneca_b=(30, 46), puno_b=(32, 40),
+                        hombro_f=(65, 42), codo_f=(76, 60), muneca_f=(74, 46), puno_f=(72, 40),
+                        rodilla_b=(34, 100), tobillo_b=(30, 123), punta_b=(38, 126), rodilla_f=(68, 100), tobillo_f=(72, 123), punta_f=(80, 126),
+                        equipo="barra", sin_guantes=True),
+    "pesas_arriba": dict(G, cabeza=(55, 20), hombro_b=(34, 40), codo_b=(30, 24), muneca_b=(32, 14), puno_b=(32, 10),
+                         hombro_f=(65, 40), codo_f=(70, 24), muneca_f=(72, 14), puno_f=(72, 10),
+                         rodilla_b=(32, 102), tobillo_b=(27, 123), punta_b=(34, 126), rodilla_f=(70, 101), tobillo_f=(75, 122), punta_f=(83, 125),
+                         equipo="barra", sin_guantes=True),
+    "soga": dict(G, hombro_b=(34, 40), codo_b=(26, 60), muneca_b=(24, 76), puno_b=(24, 84),
+                 hombro_f=(65, 40), codo_f=(74, 60), muneca_f=(78, 76), puno_f=(78, 84),
+                 rodilla_b=(38, 102), tobillo_b=(36, 123), punta_b=(44, 126), rodilla_f=(62, 102), tobillo_f=(64, 123), punta_f=(72, 126),
+                 equipo="soga", sin_guantes=True),
+    "salto": dict(cabeza=(55, 8), torso_arriba=(50, 34), torso_abajo=(49, 58),
+                  hombro_b=(34, 31), codo_b=(26, 50), muneca_b=(24, 66), puno_b=(24, 74),
+                  hombro_f=(65, 31), codo_f=(74, 50), muneca_f=(78, 66), puno_f=(78, 74),
+                  cadera_b=(41, 70), rodilla_b=(36, 90), tobillo_b=(30, 110), punta_b=(38, 115),
+                  cadera_f=(58, 70), rodilla_f=(66, 88), tobillo_f=(70, 108), punta_f=(78, 113),
+                  equipo="soga", sin_guantes=True),
+    "manoplas": dict(G, hombro_b=(34, 40), codo_b=(42, 54), muneca_b=(56, 42), puno_b=(62, 36),
+                     hombro_f=(65, 40), codo_f=(78, 52), muneca_f=(90, 40), puno_f=(96, 34),
+                     rodilla_b=(36, 102), tobillo_b=(34, 123), punta_b=(42, 126), rodilla_f=(64, 102), tobillo_f=(66, 123), punta_f=(74, 126),
+                     equipo="manoplas"),
 }
+BARRA, DISCO, MANOPLA, MANIJA = rampa("#b8bcc4"), rampa("#3a3a44"), rampa("#c23a3a"), rampa("#2b2b33")
+
+
+def equipo(L, P):
+    """Objetos sostenidos: se dibujan después del cuerpo, en las coordenadas de los puños."""
+    pb, pf = P["puno_b"], P["puno_f"]
+    if P.get("equipo") == "barra":
+        y = (pb[1] + pf[1]) / 2 - 2
+        L.capsula((pb[0] - 26, y), (pf[0] + 26, y), 2.2, 2.2, BARRA, linea=4)
+        for x in (pb[0] - 24, pf[0] + 24):
+            L.elipse((x, y), 3.4, 9.5, DISCO, 0, linea=4)
+            L.elipse((x, y), 1.6, 5.5, DISCO, 0, lejos=1, linea=None)
+    elif P.get("equipo") == "soga":
+        for p in (pb, pf):
+            L.capsula((p[0], p[1] - 4), (p[0], p[1] + 8), 2.4, 2.0, MANIJA, linea=4)
+    elif P.get("equipo") == "manoplas":
+        for p, lejos in ((pb, 1), (pf, 0)):
+            L.elipse((p[0] + 2, p[1] - 1), 6.5, 8.5, MANOPLA, -25, lejos=lejos)
+            L.elipse((p[0] + 3, p[1] - 2), 3.5, 5.0, rampa("#f1f1f6"), -25, lejos=lejos, linea=None)
 # Osvaldo y la pose de "guardia" de un no-peleador: brazos bajos.
 RELAJADO = dict(G, hombro_b=(34, 40), codo_b=(30, 62), muneca_b=(32, 80), puno_b=(34, 88),
                 hombro_f=(65, 40), codo_f=(70, 62), muneca_f=(70, 80), puno_f=(70, 88),
@@ -337,6 +382,8 @@ class Cuerpo:
 def dibujar(s, nombre):
     P = desplazar(POSES.get(nombre, G))
     c = Cuerpo(s)
+    if P.get("sin_guantes"):
+        c.GUANTE = None
     if nombre in ("guardia", "paso1", "paso2") and s["guantes"] is None and s["top"] == "musculosa" and s["toalla"]:
         P = desplazar(RELAJADO)
     L = base.Lienzo()
@@ -355,6 +402,7 @@ def dibujar(s, nombre):
     c.brazo_superior(L, P["hombro_f"], P["codo_f"], 0)
     L.elipse(P["hombro_f"], 8.8, 9, c.manga or c.PIEL, 0)
     c.antebrazo_y_puno(L, P["codo_f"], P["muneca_f"], P["puno_f"], 0, abierta)
+    equipo(L, P)
     L.contorno()
     return L.imagen()
 
@@ -373,9 +421,9 @@ def cabeza_tirada(c, L, P):
             L.pintar(hx + dy, hy - dx, p[0], p[1])
 
 
-def hoja(s):
-    tira = Image.new("RGBA", (CW * len(ORDEN_POSES), CH), (0, 0, 0, 0))
-    for i, nombre in enumerate(ORDEN_POSES):
+def hoja(s, poses):
+    tira = Image.new("RGBA", (CW * len(poses), CH), (0, 0, 0, 0))
+    for i, nombre in enumerate(poses):
         tira.alpha_composite(dibujar(s, nombre), (i * CW, 0))
     return tira
 
@@ -385,12 +433,12 @@ def main():
     ids = [a for a in sys.argv[1:] if a in PERSONAJES] or list(PERSONAJES)
     tiras = {}
     for pid in ids:
-        tiras[pid] = hoja(PERSONAJES[pid])
+        tiras[pid] = hoja(PERSONAJES[pid], ORDEN_POSES + (POSES_ENTRENAMIENTO if pid in CON_ENTRENAMIENTO else []))
         tiras[pid].save(OUT / f"{pid}.png", optimize=True)
         print("OK", pid)
     if len(ids) == len(PERSONAJES):
         esc = 2
-        rev = Image.new("RGB", (CW * len(ORDEN_POSES) * esc, (CH + 14) * len(ids) * esc), (28, 18, 51))
+        rev = Image.new("RGB", (CW * (len(ORDEN_POSES) + len(POSES_ENTRENAMIENTO)) * esc, (CH + 14) * len(ids) * esc), (28, 18, 51))
         d = ImageDraw.Draw(rev)
         f = ImageFont.load_default(size=14)
         for r, pid in enumerate(ids):

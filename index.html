@@ -870,7 +870,7 @@
       minigame.speed = 3.6;
       minigame.hits = 0;
       minigame.attempts = 0;
-      minigame.statTarget = statName;minigame.lastInput=-60;minigame.frames=0;minigame.jumped=false;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
+      minigame.statTarget = statName;minigame.lastInput=-60;minigame.frames=0;minigame.jumped=false;minigame.poseTimer=0;minigame.lastKey='KeyZ';minigame.bagSwing=0;minigame.sequence=['KeyZ','KeyX','KeyZ','KeyZ','KeyX','KeyZ'];
       focusArena();sfxSelect();
     }
   }
@@ -943,13 +943,14 @@
     if (gameState === STATE.GYM && minigame.active) {
       if(!['KeyZ','KeyX','Space'].includes(code))return;
       if(minigame.frames-minigame.lastInput<10)return;minigame.lastInput=minigame.frames;
+      minigame.poseTimer=minigame.statTarget==='fuerza'?22:14;minigame.lastKey=code;
       if(minigame.statTarget==='tecnica'){
         const expected=minigame.sequence[minigame.attempts];
         if(code===expected || code==='Space'&&expected==='KeyZ'){minigame.hits++;sfxParry();}else sfxWeakHit();
         minigame.attempts++;if(minigame.attempts>=6)finishTraining();
       }else if(minigame.statTarget==='aguante'){
         const phase=minigame.frames%30;minigame.attempts++;
-        if(phase>=8&&phase<=22){minigame.hits++;sfxHit();}else sfxWeakHit();
+        if(phase>=8&&phase<=22){minigame.hits++;minigame.bagSwing=16;sfxHit();}else{minigame.bagSwing=6;sfxWeakHit();}
         if(minigame.hits>=12)finishTraining();
       }else if(minigame.statTarget==='velocidad'){
         if(!minigame.jumped){minigame.jumped=true;if(minigame.cursor>=38&&minigame.cursor<=62){minigame.hits++;sfxParry();}else sfxWeakHit();}
@@ -1165,6 +1166,8 @@
 
     if (gameState === STATE.GYM && minigame.active) {
       minigame.frames++;
+      if(minigame.poseTimer>0)minigame.poseTimer--;
+      minigame.bagSwing*=.94;
       if(minigame.statTarget==='aguante'){if(minigame.frames>=420)finishTraining();return;}
       if(minigame.statTarget==='tecnica')return;
       minigame.cursor+=minigame.dir*minigame.speed;
@@ -1624,7 +1627,8 @@
   }
 
   // Hojas de sprites generadas con tools/art/sprites.py: celdas de 136×132, piso en y=127, torso en x=66.
-  const SPRITE_POSES=['guardia','paso1','paso2','pina','patada','bloqueo','golpe','ko','especial','sentado','senala'];
+  const SPRITE_POSES=['guardia','paso1','paso2','pina','patada','bloqueo','golpe','ko','especial','sentado','senala','pesas_abajo','pesas_arriba','soga','salto','manoplas'];
+  // Las cinco últimas sólo existen en las hojas de lautaro y osvaldo (POSES_ENTRENAMIENTO en sprites.py).
   const SPRITE_CELL={w:136,h:132,anchorX:66,anchorY:127};
   const spriteSheets={};
   // Rutas literales: tools/package-game.cjs las reemplaza por data URIs en la versión portable.
@@ -1642,7 +1646,7 @@
       case 'special':return 'especial';
       case 'seated':return 'sentado';
       case 'point':return 'senala';
-      default:return 'guardia';
+      default:return SPRITE_POSES.includes(f.state)?f.state:'guardia';
     }
   }
   // f: {x,y,dir,state,telegraph,hasBackpack}; sprite: id de la hoja. Los pies apoyan en f.y.
@@ -1655,7 +1659,8 @@
     ctx.scale(f.dir || 1,1);
     const sheet=spriteSheets[sprite];
     if(sheet&&sheet.complete&&sheet.naturalWidth){
-      const index=SPRITE_POSES.indexOf(spritePose(f,phase));
+      let index=SPRITE_POSES.indexOf(spritePose(f,phase));
+      if((index+1)*SPRITE_CELL.w>sheet.naturalWidth)index=0;
       if(f.hasBackpack){ctx.fillStyle='#86623a';ctx.fillRect(-34,-96,14,40);ctx.fillStyle='#5f4428';ctx.fillRect(-34,-80,14,4);}
       ctx.drawImage(sheet,index*SPRITE_CELL.w,0,SPRITE_CELL.w,SPRITE_CELL.h,-SPRITE_CELL.anchorX,-SPRITE_CELL.anchorY+bob,SPRITE_CELL.w,SPRITE_CELL.h);
     }else{
@@ -2006,6 +2011,58 @@
       return;
     }
 
+    // --- 5b. ENTRENAMIENTO: ESCENA DEL EJERCICIO ---
+    if(gameState===STATE.GYM&&minigame.active){
+      const mg=minigame,st=mg.statTarget,acting=mg.poseTimer>0;
+      drawStageBackground('gym_interior');ctx.fillStyle='rgba(6,10,18,.5)';ctx.fillRect(0,0,640,400);
+      // Lectura: título con progreso, instrucción y el indicador propio de cada ejercicio.
+      ctx.fillStyle='rgba(6,10,18,.88)';ctx.fillRect(40,12,560,112);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeRect(40,12,560,112);
+      ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 13px monospace';
+      ctx.fillText(`ENTRENANDO ${st.toUpperCase()} (${st==='tecnica'?mg.attempts+'/6':st==='aguante'?mg.hits+'/12':mg.attempts+'/'+(st==='velocidad'?5:3)})`,320,34);
+      ctx.fillStyle='#fff';ctx.font='12px monospace';
+      ctx.fillText(st==='tecnica'?'SEGUÍ LA SECUENCIA · Z: PIÑA · X: PATADA':st==='aguante'?'BOLSA: GOLPEÁ AL RITMO VERDE · Z O TOCÁ':st==='velocidad'?'CUERDA: UN SALTO POR VUELTA EN LA ZONA VERDE':'PESAS: MARCÁ 3 REPETICIONES EN LA ZONA VERDE',320,56);
+      if(st==='tecnica'){
+        ctx.font='bold 20px monospace';
+        mg.sequence.forEach((key,i)=>{ctx.fillStyle=i<mg.attempts?'#748378':i===mg.attempts?'#ffcc00':'#fff';ctx.fillText(key==='KeyZ'?'Z':'X',210+i*44,96);});
+        ctx.fillStyle='#bbb';ctx.font='12px monospace';ctx.fillText('Usá los botones PIÑA y PATADA en el celular',320,116);
+      }else if(st==='aguante'){
+        const onBeat=mg.frames%30>=8&&mg.frames%30<=22;
+        ctx.fillStyle=onBeat?'#66dd88':'#ffcc00';ctx.font='bold 16px monospace';ctx.fillText(`${mg.hits}/12 · ${Math.max(0,(420-mg.frames)/60).toFixed(1)}s · ${onBeat?'¡GOLPEÁ!':'ESPERÁ'}`,320,96);
+      }else{
+        ctx.fillStyle='#333';ctx.fillRect(120,74,400,26);ctx.fillStyle='#2ee653';ctx.fillRect(120+400*.38,74,400*.24,26);
+        ctx.fillStyle='#fff';ctx.fillRect(120+(mg.cursor/100)*392,68,8,38);
+      }
+      // Escena: Lautaro con look de ring a tamaño real; el equipo suelto se dibuja en el canvas.
+      const floorY=352,lx=st==='fuerza'||st==='velocidad'?320:270;
+      if(st==='fuerza'){
+        // Rack detrás de la barra (la barra va en el sprite: poses pesas_abajo / pesas_arriba de sprites.py).
+        ctx.fillStyle='#2a2a30';ctx.fillRect(lx-70,floorY-150,10,150);ctx.fillRect(lx+60,floorY-150,10,150);ctx.fillStyle='#444';ctx.fillRect(lx-74,floorY-120,18,6);ctx.fillRect(lx+56,floorY-120,18,6);
+        drawFighterSprite({x:lx,y:floorY,dir:1,state:acting?'pesas_arriba':'pesas_abajo'},'lautaro');
+      }else if(st==='velocidad'){
+        // Una vuelta de soga por vuelta del cursor; en el aire se usa la pose salto.
+        const theta=mg.cursor/100*Math.PI*2,air=acting;
+        const y=floorY-(air?14:0),hy=y-(air?-10:0)-44;
+        const rope=(behind)=>{ctx.strokeStyle=behind?'#8a8378':'#d8cfb8';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(lx-42,hy);ctx.quadraticCurveTo(lx,hy-Math.cos(theta)*190,lx+42,hy);ctx.stroke();};
+        // Cursor 0: soga por arriba; cursor 50 (zona verde): soga bajo los pies.
+        if(Math.cos(theta)>0)rope(true);
+        drawFighterSprite({x:lx,y:y,dir:1,state:air?'salto':'soga'},'lautaro');
+        if(Math.cos(theta)<=0)rope(false);
+      }else if(st==='aguante'){
+        // Bolsa colgada; el balanceo se fija al golpear y decae en update.
+        const angle=Math.sin(mg.frames*.35)*mg.bagSwing*.012;
+        ctx.save();ctx.translate(352,floorY-290);ctx.rotate(angle);
+        ctx.strokeStyle='#8a8f99';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,90);ctx.stroke();
+        ctx.fillStyle='#8f2a2a';ctx.fillRect(-22,90,44,130);ctx.fillStyle='#b23a3a';ctx.fillRect(-16,96,10,118);ctx.fillStyle='#5a1a1a';ctx.fillRect(-22,90,44,8);ctx.fillRect(-22,212,44,8);
+        ctx.restore();
+        drawFighterSprite({x:lx,y:floorY,dir:1,state:acting?'pina':'guardia'},'lautaro');
+      }else{
+        drawFighterSprite({x:382,y:floorY,dir:-1,state:'manoplas'},'osvaldo');
+        drawFighterSprite({x:lx,y:floorY,dir:1,state:acting?(mg.lastKey==='KeyX'?'patada':'pina'):'guardia'},'lautaro');
+      }
+      ctx.fillStyle='#b9c6c9';ctx.textAlign='center';ctx.font='11px monospace';ctx.fillText(recoveryMessage,320,386);
+      return;
+    }
+
     if (gameState === STATE.GYM) {
       drawStageBackground('gym_interior');
       ctx.fillStyle = 'rgba(10, 10, 18, 0.88)';
@@ -2079,63 +2136,6 @@
       ctx.fillStyle='#b9c6c9';ctx.textAlign='center';ctx.font='10px monospace';
       ctx.fillText(recoveryMessage||'Descanso: ocupa un día · Comida: ayuda semanal · Masaje: -30 fatiga',320,321);
       ctx.font='9px monospace';ctx.fillText(saveAvailable?'PROGRESO GUARDADO EN ESTE NAVEGADOR':'GUARDADO NO DISPONIBLE EN ESTE NAVEGADOR',320,392);
-
-      // Si el minijuego de manoplas/bolsa está activo
-      if (minigame.active) {
-        ctx.fillStyle = 'rgba(0,0,0,0.94)';
-        ctx.fillRect(70, 125, 500, 190);
-        ctx.strokeStyle = '#ffcc00';
-        ctx.strokeRect(70, 125, 500, 190);
-
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffcc00';
-        ctx.font = '11px monospace';
-        ctx.fillText(`ENTRENANDO ${minigame.statTarget.toUpperCase()} (${minigame.statTarget==='tecnica'?minigame.attempts+'/6':minigame.statTarget==='aguante'?minigame.hits+'/12':minigame.attempts+'/'+(minigame.statTarget==='velocidad'?5:3)})`, 320, 160);
-
-        ctx.fillStyle = '#fff';
-        ctx.font = '9px monospace';
-        ctx.font='12px monospace';
-        const st=minigame.statTarget;
-        const instruction=st==='tecnica'?'SEGUÍ LA SECUENCIA · Z: PIÑA · X: PATADA':st==='aguante'?'BOLSA: GOLPEÁ AL RITMO VERDE · Z O TOCÁ':st==='velocidad'?'CUERDA: UN SALTO POR VUELTA EN LA ZONA VERDE':'PESAS: MARCÁ 3 REPETICIONES EN LA ZONA VERDE';
-        ctx.fillText(instruction,320,190);
-        if(st==='tecnica'){
-          ctx.fillStyle='#7dd3fc';ctx.font='bold 20px monospace';
-          minigame.sequence.forEach((key,i)=>{ctx.fillStyle=i<minigame.attempts?'#748378':i===minigame.attempts?'#ffcc00':'#fff';ctx.fillText(key==='KeyZ'?'Z':'X',210+i*44,237);});
-          ctx.fillStyle='#bbb';ctx.font='12px monospace';ctx.fillText('Usá los botones PIÑA y PATADA en el celular',320,304);
-        } else if(st==='aguante'){
-          ctx.fillStyle=minigame.frames%30>=8&&minigame.frames%30<=22?'#66dd88':'#ffcc00';ctx.font='bold 16px monospace';ctx.fillText(`${minigame.hits}/12 · ${Math.max(0,(420-minigame.frames)/60).toFixed(1)}s · ${minigame.frames%30>=8&&minigame.frames%30<=22?'¡GOLPEÁ!':'ESPERÁ'}`,320,238);
-        }
-
-
-        // Equipo animado: pesas, bolsa o práctica de boxeo.
-        const pulse = Math.sin(minigame.cursor / 8) * 7;
-        ctx.fillStyle = '#d69a75'; ctx.fillRect(310, 263, 18, 17);
-        ctx.fillStyle = '#4a525d'; ctx.fillRect(306, 280, 26, 28);
-        ctx.fillStyle = '#d69a75';
-        if (minigame.statTarget === 'fuerza') {
-          ctx.fillRect(293, 277-pulse, 13, 6); ctx.fillRect(332, 277-pulse, 13, 6);
-          ctx.fillStyle='#aaa';ctx.fillRect(281,270-pulse,76,4);
-          ctx.fillStyle='#444';ctx.fillRect(279,260-pulse,10,23);ctx.fillRect(348,260-pulse,10,23);
-        } else if (minigame.statTarget === 'velocidad') {
-          ctx.strokeStyle='#ddd';ctx.beginPath();ctx.ellipse(319,287,38,25+ pulse,0,0,Math.PI*2);ctx.stroke();
-        } else {
-          ctx.fillRect(332,282,22+pulse,5);
-          ctx.fillStyle='#b22';ctx.fillRect(370+pulse,261,24,46);
-          ctx.fillStyle='#aaa';ctx.fillRect(380+pulse,252,3,9);
-        }
-
-        // Barra de precisión
-        if(!['tecnica','aguante'].includes(minigame.statTarget)){
-        ctx.fillStyle = '#333';
-        ctx.fillRect(120, 220, 400, 26);
-        ctx.fillStyle = '#2ee653';
-        ctx.fillRect(120 + 400 * 0.38, 220, 400 * 0.24, 26); // Zona verde
-
-        // Cursor móvil
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(120 + (minigame.cursor / 100) * 392, 214, 8, 38);
-        }
-      }
 
       // Botón para ir a la pelea
       ctx.fillStyle = '#991f1f';
