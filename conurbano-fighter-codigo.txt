@@ -166,10 +166,11 @@
     body.playing{padding:6px;justify-content:flex-start;min-height:100dvh;}
     body.playing #top-bar,body.playing #guide,body.playing #career-panel,body.playing #player-panel,body.playing #save-status{display:none;}
     /* Apaisado: arena arriba, controles en una franja baja con las dos zonas en los extremos. */
-    body.playing #cabinet{max-width:calc((100dvh - 132px)*1.6);border-width:3px;}
-    body.playing #controls-bar{margin:0;padding:6px 0;grid-template-columns:1fr 1fr;column-gap:12vw;}
-    body.playing .ctrl-btn{padding:8px 6px;min-height:52px;}
-    body.playing #attack-pad{grid-template-columns:repeat(4,1fr);}
+    body.playing #cabinet{max-width:calc((100dvh - 16px)*1.6);border-width:3px;}
+    body.playing #controls-bar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:6px 10px;grid-template-columns:1fr 1fr;column-gap:30vw;pointer-events:none;}
+    body.playing #controls-bar .pad-group{pointer-events:auto;}
+    body.playing .ctrl-btn{padding:8px 6px;min-height:52px;opacity:.82;}
+    body.playing #attack-pad{grid-template-columns:1fr 1fr;}
   }
   #market details{margin-top:12px;}#market summary{cursor:pointer;color:#ffda62;padding:8px 0;}
   #scene-controls{width:100%;max-width:840px;margin:8px 0;}#scene-controls button{width:100%;min-height:44px;font:16px monospace;}
@@ -1043,6 +1044,8 @@
     const rect=movePad.getBoundingClientRect(),right=e.clientX>rect.left+rect.width/2;
     keys.ArrowLeft=!right;keys.ArrowRight=right;
   });
+  // Al soltar, se liberan las dos direcciones: el botón que capturó el puntero puede no ser el último activo.
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])movePad.addEventListener(type,()=>{keys.ArrowLeft=false;keys.ArrowRight=false;});
 
   // Clics directos en el Canvas (para el Gimnasio y pantallas de historia)
   canvas.addEventListener('pointerdown', (e) => {

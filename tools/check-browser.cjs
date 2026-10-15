@@ -58,6 +58,14 @@ const server=http.createServer((req,res)=>{
     await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2,id:1}]});
     await page.waitForTimeout(180);assert.equal(await run('keys.ArrowRight'),true);
     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(50);assert.equal(await run('keys.ArrowRight'),false);
+    // Deslizar el pulgar de IZQ a DER cambia de dirección sin levantarlo y soltar libera las dos.
+    const left=await page.locator('[data-key=ArrowLeft]').boundingBox();
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:left.x+left.width/2,y:left.y+left.height/2,id:1}]});
+    await page.waitForTimeout(80);assert.equal(await run('keys.ArrowLeft'),true);
+    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2,id:1}]});
+    await page.waitForTimeout(80);assert.equal(await run('keys.ArrowRight'),true);assert.equal(await run('keys.ArrowLeft'),false);
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(50);
+    assert.equal(await run('keys.ArrowRight'),false,'direction stuck after sliding thumb');assert.equal(await run('keys.ArrowLeft'),false);
     for(const el of await page.locator('.ctrl-btn').all()){const b=await el.boundingBox();assert(b.height>=44&&b.width>=44,'touch target too small');}
    }
    await page.screenshot({path:path.join(out,`fight-${viewport.width}x${viewport.height}.png`),fullPage:true});
