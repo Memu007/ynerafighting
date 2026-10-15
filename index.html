@@ -1355,13 +1355,14 @@
   }
   // Generador determinista para multitudes y detalles repetidos: el fondo no cambia entre cuadros.
   function seeded(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
-  function paintCrowd(g,x0,x1,y0,rows,seed,dark){
+  // `frame` alterna el balanceo de cada hincha sin cambiar la secuencia aleatoria de colores.
+  function paintCrowd(g,x0,x1,y0,rows,seed,dark,frame=0){
     const rnd=seeded(seed);
     const skins=['#d8a57a','#b97d55','#8c5a3a','#e8bb93','#6f4330'],shirts=['#c23a3a','#2f4f9f','#e5e1d4','#2b2b33','#d8b63c','#3f7f4e','#7a3f8f','#d16a2a'];
     for(let r=0;r<rows;r++){
       const y=y0+r*12,fade=dark?.45+r*.18:1;
       for(let x=x0+(r%2)*7;x<x1;x+=14){
-        const bob=Math.floor(rnd()*3);
+        const bob=(Math.floor(rnd()*3)+frame*(x/14%2?1:2))%3;
         g.globalAlpha=Math.min(1,fade);
         g.fillStyle=shirts[Math.floor(rnd()*shirts.length)];g.fillRect(x-5,y+7-bob,11,9);
         g.fillStyle=skins[Math.floor(rnd()*skins.length)];g.fillRect(x-3,y-bob,7,8);
@@ -1400,6 +1401,8 @@
   }
 
   function drawStageBackground(stage) {
+    // Las tribunas alternan dos cuadros cacheados; en el KO y entre peleas quedan quietas.
+    const crowdFrame=gameState===STATE.FIGHT&&player&&enemy&&player.state!=='ko'&&enemy.state!=='ko'?Math.floor(Date.now()/450)%2:0;
     const rect=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
     if(stage === 'bedroom') {
       ctx.drawImage(stageLayer('bedroom',g=>{
@@ -1562,7 +1565,7 @@
       return;
     }
     if (stage === 'club_ring') {
-      ctx.drawImage(stageLayer('club_ring',g=>{
+      ctx.drawImage(stageLayer('club_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Club Social Madero: ladrillo visto, banderines, lamparitas colgadas y vecinos en sillas plegables.
         r(0,0,640,260,'#3a1b19');for(let row=0;row<26;row++)for(let col=0;col<24;col++){const x=col*30+(row%2)*15-15;r(x,row*10,28,8,(col*7+row)%4?'#4f2321':'#5a2a26');}
@@ -1571,7 +1574,7 @@
         paintBanner(g,160,74,320,36,'#0d0d12','#ffcc00','CLUB SOCIAL MADERO',14);
         paintBanner(g,30,116,110,26,'#1d3c3b','#e4dbb9','BOXEO · MMA',9);paintBanner(g,500,116,110,26,'#8f3b2f','#f3e9c8','PANADERÍA LA UNIÓN',8);
         r(0,150,640,8,'#2a1414');
-        paintCrowd(g,10,630,164,3,7,false);
+        paintCrowd(g,10,630,164,3,7,false,crowdFrame);
         r(0,196,640,64,'#1e1216');for(let x=18;x<640;x+=32){r(x,236,22,22,'#3b3b44');r(x,236,22,4,'#5c5c66');}
         paintRing(g,'#2d3b56',['#d62424','#eeeeee','#1d4ed8'],'#34203a','#d62424');
         g.fillStyle='#8aa0c8';g.font='bold 22px monospace';g.textAlign='center';g.globalAlpha=.25;g.fillText('C.S.M.',320,345);g.globalAlpha=1;
@@ -1579,7 +1582,7 @@
       return;
     }
     if (stage === 'poli_ring') {
-      ctx.drawImage(stageLayer('poli_ring',g=>{
+      ctx.drawImage(stageLayer('poli_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Polideportivo municipal: bloques pintados, tribuna tubular, reflectores de cancha y lonas de sponsors.
         r(0,0,640,260,'#c9c3b2');for(let row=0;row<14;row++)for(let col=0;col<18;col++){const x=col*40+(row%2)*20-20;r(x,row*14,38,12,(col+row)%5?'#cfc9b8':'#c2bcab');}
@@ -1587,7 +1590,7 @@
         r(0,120,640,28,'#3a6ea5');r(0,144,640,4,'#2b4f78');g.fillStyle='#ffffff';g.font='bold 13px monospace';g.textAlign='center';g.fillText('POLIDEPORTIVO MUNICIPAL · LA MATANZA',320,139);
         paintBanner(g,20,82,150,30,'#e5e1d4','#c23a3a','GOMERÍA RUTA 3',9);paintBanner(g,240,82,160,30,'#2f4f9f','#ffffff','CERVEZA DEL OESTE',9);paintBanner(g,470,82,150,30,'#d8b63c','#2b2b33','PANADERÍA LA UNIÓN',8);
         for(let i=0;i<5;i++){r(0,152+i*22,640,20,i%2?'#8a8f99':'#9aa0ab');r(0,170+i*22,640,2,'#5f6670');}
-        paintCrowd(g,8,632,150,5,31,false);
+        paintCrowd(g,8,632,150,5,31,false,crowdFrame);
         r(0,250,640,10,'#6a7180');for(let x=0;x<640;x+=40)r(x,250,2,10,'#4a5160');
         paintRing(g,'#5b6b86',['#1d4ed8','#eeeeee','#1d4ed8'],'#2b3a5a','#1d4ed8');
         g.fillStyle='#ffffff';g.font='bold 20px monospace';g.textAlign='center';g.globalAlpha=.2;g.fillText('MUNICIPALIDAD',320,348);g.globalAlpha=1;
@@ -1595,7 +1598,7 @@
       return;
     }
     if (stage === 'estadio_ring') {
-      ctx.drawImage(stageLayer('estadio_ring',g=>{
+      ctx.drawImage(stageLayer('estadio_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Estadio cubierto: oscuridad, tribuna alta llena, pantalla gigante y batería de reflectores.
         r(0,0,640,260,'#0a0b14');
@@ -1603,7 +1606,7 @@
         r(0,0,640,40,'#15161f');r(0,40,640,4,'#2a2b38');for(let x=40;x<640;x+=70){r(x-14,20,28,18,'#2b2c36');r(x-10,24,20,10,'#fff7d6');paintLightCone(g,x,38,170,260,'rgba(255,250,220,A)',.13);}
         r(220,52,200,58,'#101018');r(224,56,192,50,'#1b1b2a');g.fillStyle='#ffcc00';g.font='bold 14px monospace';g.textAlign='center';g.fillText('CAMPEONATO ARGENTINO',320,76);g.fillStyle='#7dd3fc';g.font='10px monospace';g.fillText('NOCHE DE TÍTULO · BUENOS AIRES',320,96);
         for(let i=0;i<4;i++)r(0,116+i*28,640,2,'#2b2b3a');
-        paintCrowd(g,6,634,120,8,55,true);
+        paintCrowd(g,6,634,120,8,55,true,crowdFrame);
         r(0,236,640,24,'#15161f');r(0,236,640,4,'#2a2b3a');for(let x=0;x<640;x+=80){r(x+10,244,60,8,'#1d1d2a');}
         paintBanner(g,30,232,120,22,'#1d4ed8','#ffffff','CERVEZA DEL OESTE',8);paintBanner(g,490,232,120,22,'#c23a3a','#ffffff','GOMERÍA RUTA 3',8);
         paintRing(g,'#1e2a44',['#ffffff','#d62424','#ffffff'],'#101424','#eeeeee');
@@ -1613,7 +1616,7 @@
       return;
     }
     // Arena internacional (antes 'ufc_octagon').
-    ctx.drawImage(stageLayer('arena_ring',g=>{
+    ctx.drawImage(stageLayer('arena_ring_'+crowdFrame,g=>{
       const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
       // Arena de Las Vegas: pantallas LED, humo, tribuna gigante y parrilla de luces de colores.
       r(0,0,640,260,'#05050c');
@@ -1621,7 +1624,7 @@
       r(0,0,640,34,'#0f0f1a');for(let x=20;x<640;x+=52){const i=(x/52|0)%4,c=['#ff3b6b','#3bc0ff','#ffd23b','#9b5cff'][i],cone=['rgba(255,59,107,A)','rgba(59,192,255,A)','rgba(255,210,59,A)','rgba(155,92,255,A)'][i];r(x-8,14,16,14,'#20202c');r(x-5,18,10,8,c);paintLightCone(g,x,30,120,250,cone,.1);}
       r(0,70,640,30,'#0b1120');for(let x=0;x<640;x+=4)for(let y=72;y<98;y+=4)r(x,y,3,3,(x/4+y/4)%7===0?'#ff3b6b':(x/4+y/4)%11===0?'#3bc0ff':'#121b33');
       g.fillStyle='#ffffff';g.font='bold 14px monospace';g.textAlign='center';g.fillText('LIGA MUNDIAL DE KICKBOXING · LAS VEGAS',320,90);
-      paintCrowd(g,6,634,110,9,77,true);
+      paintCrowd(g,6,634,110,9,77,true,crowdFrame);
       r(0,216,640,44,'#0d0f1c');for(let x=0;x<640;x+=4)for(let y=220;y<256;y+=4)r(x,y,3,3,(x/4|0)%40<20?'#1b2b5c':'#5c1b2b');
       g.fillStyle='#ffffff';g.font='bold 18px monospace';g.fillText('WORLD TITLE · CINTURÓN',320,243);
       paintRing(g,'#e9e4d6',['#d62424','#1d4ed8','#d62424'],'#111120','#111120');
