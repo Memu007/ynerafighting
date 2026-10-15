@@ -778,6 +778,9 @@
   let enemy = null;
   let braianAmbush = null;
   let floatingTexts = [];
+  // Efectos de impacto: chispas en el punto de contacto y sacudida de cámara. Sólo arte; no frenan la simulación.
+  let hitFx = [], shake = 0;
+  function addHitFx(x,y,kind){hitFx.push({x,y,kind,life:kind==='ko'?40:kind==='special'?26:14,max:kind==='ko'?40:kind==='special'?26:14});shake=Math.max(shake,kind==='ko'?16:kind==='special'?12:kind==='heavy'?7:kind==='light'?3:2);}
   let fightBanner = '';
   let fightBannerTimer = 0;
   let prologueHitsLanded = 0;
@@ -827,7 +830,7 @@
 
     specialFx=0;
     prologueHitsLanded = 0;
-    floatingTexts = [];
+    floatingTexts = [];hitFx=[];shake=0;
     fightTimer = 99;lastSecondTick=0;
     fightBanner = 'ROUND 1 - ¡A PELEAR!';
     fightBannerTimer = 90;
@@ -1097,7 +1100,7 @@
         enemy.hp = Math.max(180, enemy.hp - chipDmg);
         enemy.state = 'hit';
         enemy.stateTimer = 10; // Se sacude para que sientas que le pegaste
-        enemy.vx = 2.2;
+        enemy.vx = 2.2;addHitFx((player.x+enemy.x)/2,enemy.y-90,'light');
         prologueHitsLanded++;
         sfxWeakHit();
         addFloatingText(enemy.x, enemy.y - 85, `¡POCA FUERZA! -${chipDmg}`, '#ff9966');
@@ -1119,7 +1122,7 @@
       enemy.hitsTaken++;
       if(type !== 'special' && (enemy.state==='block' || (style==='counter'&&enemy.hitsTaken%4===0))) {
         totalDmg = Math.max(2, Math.round(totalDmg*(type==='kick'?.55:.22)));
-        enemy.hp = Math.max(0,enemy.hp-totalDmg);
+        enemy.hp = Math.max(0,enemy.hp-totalDmg);addHitFx((player.x+enemy.x)/2,enemy.y-88,'block');
         enemy.state='block';enemy.stateTimer=8;enemy.telegraph=style==='counter'?30:18;
         enemy.aiCooldown=12;
         player.energy=Math.min(100,player.energy+18);
@@ -1137,7 +1140,7 @@
         sfxHit(type !== 'punch');
       }
 
-      enemy.hp = Math.max(0, enemy.hp - totalDmg);
+      enemy.hp = Math.max(0, enemy.hp - totalDmg);addHitFx((player.x+enemy.x)/2,enemy.y-(type==='kick'?70:92),type==='special'?'special':type==='kick'||enemy.telegraph>0?'heavy':'light');
       if(enemy.telegraph===0){enemy.state='hit';enemy.stateTimer=type==='special'?20:7;}
       enemy.vx = player.dir * (type === 'kick' ? 6 : 3.5);
       if(type !== 'special') player.energy = Math.min(100, player.energy + 22);
@@ -1180,6 +1183,7 @@
     if (gameState !== STATE.FIGHT) return;
 
     const f = FIGHTS[currentFightIndex];
+    hitFx.forEach(h=>h.life--);hitFx=hitFx.filter(h=>h.life>0);if(shake>0)shake--;
     if(player.state==='ko'||enemy.state==='ko')return;
 
     if(specialFx>0)specialFx--;
@@ -1255,12 +1259,12 @@
 
           if (player.state === 'block') {
             const blockedDmg = f.isPrologue ? 12 : Math.max(2, Math.round(dmg * 0.22));
-            player.hp = Math.max(0, player.hp - blockedDmg);
+            player.hp = Math.max(0, player.hp - blockedDmg);addHitFx((player.x+enemy.x)/2,player.y-88,'block');
             player.energy = Math.min(100, player.energy + 15);
             sfxBlock();
             addFloatingText(player.x, player.y - 80, `GUARDIA -${blockedDmg}`, '#66dd88');
           } else {
-            player.hp = Math.max(0, player.hp - dmg);
+            player.hp = Math.max(0, player.hp - dmg);addHitFx((player.x+enemy.x)/2,player.y-90,'heavy');
             player.state = 'hit';
             player.stateTimer = 16;
             player.combo = 0;
@@ -1305,7 +1309,7 @@
       braianAmbush.x += 5.2;
       if (braianAmbush.x >= player.x - 25) {
         braianAmbush.done = true;
-        player.hp = 0;
+        player.hp = 0;addHitFx(player.x-10,player.y-100,'ko');
         sfxKO();
         addFloatingText(player.x, player.y - 95, '¡GOLPE TRAICIONERO DE ATRÁS!', '#ff2222');
       }
@@ -1313,7 +1317,7 @@
 
     // Comprobar Fin del Combate
     if (player.hp <= 0 && player.state !== 'ko') {
-      player.state = 'ko';
+      player.state = 'ko';addHitFx(player.x,player.y-90,'ko');
       sfxKO();
       setTimeout(() => {
         if (f.isPrologue) {
@@ -1324,7 +1328,7 @@
         }
       }, 1700);
     } else if (enemy.hp <= 0 && enemy.state !== 'ko') {
-      enemy.state = 'ko';
+      enemy.state = 'ko';addHitFx(enemy.x,enemy.y-90,'ko');
       sfxKO();
       fightBanner = '¡K.O. - GANADOR LAUTARO!';
       fightBannerTimer = 120;
@@ -1675,6 +1679,28 @@
   // ========================================================
   // 10. DIBUJO DE PANTALLAS PRINCIPALES
   // ========================================================
+  function drawHitFx(){
+    for(const h of hitFx){
+      const t=1-h.life/h.max;
+      ctx.save();ctx.translate(h.x,h.y);
+      if(h.kind==='block'){
+        ctx.strokeStyle='#8ff0a8';ctx.lineWidth=3;ctx.globalAlpha=1-t;ctx.beginPath();ctx.arc(0,0,14+t*18,-.9,.9);ctx.stroke();
+      }else if(h.kind==='ko'||h.kind==='special'){
+        ctx.strokeStyle=h.kind==='ko'?'#ffffff':'#ffd23b';ctx.lineWidth=5*(1-t)+1;ctx.globalAlpha=1-t;
+        ctx.beginPath();ctx.ellipse(0,0,20+t*110,12+t*60,0,0,Math.PI*2);ctx.stroke();
+        ctx.beginPath();ctx.ellipse(0,0,10+t*70,6+t*38,0,0,Math.PI*2);ctx.stroke();
+      }else{
+        // Chispa de impacto: estrella que se abre y se apaga, con rayos en los golpes fuertes.
+        const r=h.kind==='heavy'?22:14,scale=.6+t*.8;ctx.rotate(t*1.2);ctx.globalAlpha=1-t*t;
+        ctx.fillStyle=t<.35?'#fff6c8':'#ffb43b';ctx.beginPath();
+        for(let i=0;i<10;i++){const ang=i*Math.PI/5,rr=(i%2?r*.35:r)*scale;i?ctx.lineTo(Math.cos(ang)*rr,Math.sin(ang)*rr):ctx.moveTo(Math.cos(ang)*rr,Math.sin(ang)*rr);}
+        ctx.closePath();ctx.fill();
+        if(h.kind==='heavy'){ctx.strokeStyle='#fff6c8';ctx.lineWidth=2;for(let i=0;i<6;i++){const ang=i*Math.PI/3+.4;ctx.beginPath();ctx.moveTo(Math.cos(ang)*r*scale,Math.sin(ang)*r*scale);ctx.lineTo(Math.cos(ang)*(r+22)*scale,Math.sin(ang)*(r+22)*scale);ctx.stroke();}}
+      }
+      ctx.restore();
+    }
+  }
+
   function draw() {
     ctx.clearRect(0, 0, 640, 400);
 
@@ -1806,6 +1832,8 @@
     // --- 4. COMBATE EN VIVO ---
     if (gameState === STATE.FIGHT) {
       const f = FIGHTS[currentFightIndex];
+      ctx.save();
+      if(shake>0){const a=shake*.6;ctx.translate(Math.round((Math.random()-.5)*a*2),Math.round((Math.random()-.5)*a));}
       drawStageBackground(f.stage);
       if(specialFx>0){
         const t=(38-specialFx)/38;
@@ -1871,7 +1899,8 @@
       ctx.font = '16px monospace';
       ctx.fillText(String(fightTimer).padStart(2, '0'), 320, 38);
 
-      // Luchadores
+      // Luchadores; la especial deja estelas del jugador detrás del avance.
+      if(specialFx>0){for(let k=3;k>0;k--){ctx.globalAlpha=.12*k;drawFighterSprite({...player,x:player.x-player.dir*k*16},f.isPrologue?'lautaro_calle':'lautaro');}ctx.globalAlpha=1;}
       drawFighterSprite(player, f.isPrologue ? 'lautaro_calle' : 'lautaro');
       drawFighterSprite(enemy, f.portrait);
 
@@ -1887,6 +1916,7 @@
         drawFighterSprite({ x: braianAmbush.x, y: braianAmbush.y, dir: 1, state: 'attack' }, 'braian');
       }
 
+      drawHitFx();
       // Textos de daño flotantes
       ctx.font = '9px monospace';
       ctx.textAlign = 'center';
@@ -1905,6 +1935,7 @@
         ctx.font = '11px monospace';
         ctx.fillText(fightBanner, 320, 181);
       }
+      ctx.restore();
       return;
     }
 
