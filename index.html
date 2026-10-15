@@ -97,29 +97,28 @@
   }
 
   /* Controles táctiles / mouse en pantalla */
+  /* Dos zonas separadas: pulgar izquierdo mueve, pulgar derecho golpea. */
   #controls-bar {
     width: 100%;
     max-width: 840px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    column-gap: clamp(16px, 6vw, 48px);
     padding: 10px 6px;
-    gap: 10px;
   }
-
-  .pad-group {
-    display: flex;
-    gap: 6px;
-  }
+  #move-pad { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; touch-action: none; }
+  #attack-pad { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (pointer: coarse) { .ctrl-btn .key { display: none; } .ctrl-btn { font-size: 12px; } }
 
   .ctrl-btn {
     background: #232334;
     color: #fff;
     border: 3px solid #555577;
-    border-radius: 8px;
-    padding: 12px 14px;
+    border-radius: 10px;
+    padding: 12px 8px;
+    min-height: 56px;
     font-family: inherit;
-    font-size: 10px;
+    font-size: 11px;
     cursor: pointer;
     box-shadow: 0 4px 0 #11111a;
     touch-action: none;
@@ -166,9 +165,11 @@
   @media(max-height:520px) and (orientation:landscape){
     body.playing{padding:6px;justify-content:flex-start;min-height:100dvh;}
     body.playing #top-bar,body.playing #guide,body.playing #career-panel,body.playing #player-panel,body.playing #save-status{display:none;}
-    body.playing #cabinet{max-width:calc((100dvh - 84px)*1.6);border-width:3px;}
-    body.playing #controls-bar{margin:0;padding:8px 0;gap:8px;}
-    body.playing .ctrl-btn{padding:10px 6px;}
+    /* Apaisado: arena arriba, controles en una franja baja con las dos zonas en los extremos. */
+    body.playing #cabinet{max-width:calc((100dvh - 132px)*1.6);border-width:3px;}
+    body.playing #controls-bar{margin:0;padding:6px 0;grid-template-columns:1fr 1fr;column-gap:12vw;}
+    body.playing .ctrl-btn{padding:8px 6px;min-height:52px;}
+    body.playing #attack-pad{grid-template-columns:repeat(4,1fr);}
   }
   #market details{margin-top:12px;}#market summary{cursor:pointer;color:#ffda62;padding:8px 0;}
   #scene-controls{width:100%;max-width:840px;margin:8px 0;}#scene-controls button{width:100%;min-height:44px;font:16px monospace;}
@@ -188,10 +189,7 @@
   #training-mode{display:block;margin:12px 0;}
   #save-status{width:100%;max-width:840px;color:#a9bbcc;font:13px/1.4 system-ui;margin:6px 0;}
   #market .gear{border-color:#aa8d50;background:#3a3021;}
-  #controls-bar{flex-wrap:wrap;}
-  #controls-bar .pad-group{flex:1;display:flex;justify-content:center;}
-  .ctrl-btn{flex:1;min-height:48px;padding:12px 8px;}
-  @media(max-width:540px){body{padding:8px;justify-content:flex-start}#controls-bar{gap:10px;padding:8px 0}#controls-bar .pad-group:last-child{flex-basis:100%}.ctrl-btn{font-size:9px;padding:12px 4px}#player-panel{grid-template-columns:repeat(2,1fr)!important}#gym-actions .actions{grid-template-columns:1fr}#career-panel{gap:6px 16px;font-size:14px}}
+  @media(max-width:540px){body{padding:8px;justify-content:flex-start}#controls-bar{padding:8px 0;grid-template-columns:1fr 1fr;column-gap:18px}#move-pad .ctrl-btn{min-height:72px}#attack-pad .ctrl-btn{min-height:64px;padding:8px 4px}#player-panel{grid-template-columns:repeat(2,1fr)!important}#gym-actions .actions{grid-template-columns:1fr}#career-panel{gap:6px 16px;font-size:14px}}
 
   #player-panel, #guide, #market {width:100%;max-width:840px;font:16px/1.5 system-ui,sans-serif;margin:8px 0;background:#151d2c;border:1px solid #394b63;border-radius:10px;padding:14px;}
   #player-panel {display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
@@ -239,16 +237,16 @@
   </div>
 </div>
 
-<div id="controls-bar">
-  <div class="pad-group">
+<div id="controls-bar" aria-label="Controles táctiles">
+  <div class="pad-group" id="move-pad">
     <button class="ctrl-btn" data-key="ArrowLeft">◀ IZQ</button>
     <button class="ctrl-btn" data-key="ArrowRight">DER ▶</button>
   </div>
-  <div class="pad-group">
-    <button class="ctrl-btn btn-punch" data-key="KeyZ">Z: PIÑA</button>
-    <button class="ctrl-btn btn-kick" data-key="KeyX">X: PATADA</button>
-    <button class="ctrl-btn btn-block" data-key="KeyC">C: GUARDIA</button>
-    <button class="ctrl-btn btn-spec" data-key="KeyV">V: ESPECIAL</button>
+  <div class="pad-group" id="attack-pad">
+    <button class="ctrl-btn btn-punch" data-key="KeyZ"><span class="key">Z: </span>PIÑA</button>
+    <button class="ctrl-btn btn-kick" data-key="KeyX"><span class="key">X: </span>PATADA</button>
+    <button class="ctrl-btn btn-block" data-key="KeyC"><span class="key">C: </span>GUARDIA</button>
+    <button class="ctrl-btn btn-spec" data-key="KeyV"><span class="key">V: </span>ESPECIAL</button>
   </div>
 </div>
 
@@ -1027,6 +1025,15 @@
     btn.addEventListener('pointerleave', () => { keys[k] = false; });
     btn.addEventListener('pointercancel',()=>{keys[k]=false;});
     btn.addEventListener('lostpointercapture',()=>{keys[k]=false;});
+  });
+
+  // Deslizar el pulgar dentro del pad de movimiento cambia de dirección sin levantarlo.
+  const movePad=document.getElementById('move-pad');
+  movePad.addEventListener('pointermove',e=>{
+    if(!(e.buttons&1)&&e.pointerType!=='touch')return;
+    const pressed=['ArrowLeft','ArrowRight'].some(k=>keys[k]);if(!pressed)return;
+    const rect=movePad.getBoundingClientRect(),right=e.clientX>rect.left+rect.width/2;
+    keys.ArrowLeft=!right;keys.ArrowRight=right;
   });
 
   // Clics directos en el Canvas (para el Gimnasio y pantallas de historia)
