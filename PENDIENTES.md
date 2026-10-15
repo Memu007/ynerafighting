@@ -40,9 +40,14 @@ Los retratos detallados están integrados. Las correcciones de teclado, foco y p
 
 Nota: la sección 8 de docs/GDD.md (sprites de 40×64 y 320×224) quedó vieja; la referencia de tamaño es la hoja aprobada de 104×132 y el canvas de 640×400.
 
+## Interfaz
+- [x] Gimnasio: el canvas es una escena (Lautaro, Osvaldo, cabecera con día, semana y rival) y toda la interacción vive en los paneles HTML, que son legibles en celular. Se eliminaron los botones dibujados en el canvas y su manejo de clics. Paneles con una sola familia de tarjetas: cabecera dorada monoespaciada, botones de dos líneas con color por estadística, fichas de estado.
+- [x] Controles táctiles en dos zonas: movimiento a la izquierda (deslizar el pulgar cambia de dirección sin levantarlo) y golpes 2×2 a la derecha, con separación entre zonas. Botones de 64–72 px de alto en celular. Se ocultan fuera de la pelea, la introducción y el entrenamiento.
+- [x] Sacudida de cámara determinista por cuadro de simulación. `check-game` falla si el archivo portable no coincide con `index.html`.
+
 ## Verificación pendiente con jugadores
 - [ ] Evaluar diversión y dificultad con una persona jugando la campaña. Registrar rival, stats, fatiga y resultado antes de ajustar números.
-- [ ] Comprobar respuesta y ergonomía en un teléfono físico. La emulación táctil y las capturas verifican geometría y eventos, pero no dedos, latencia y rendimiento del aparato.
+- [ ] Comprobar respuesta y ergonomía en un teléfono físico. La emulación táctil y las capturas verifican geometría y eventos, pero no dedos, latencia y rendimiento del aparato. Las dos zonas de control y el deslizamiento del pulgar se validaron sólo con eventos emulados.
 
 ## Siguiente paso
 Los pendientes de arte de la lista están cerrados. Quedan las dos verificaciones con personas: dificultad jugando la campaña y ergonomía en un teléfono físico. Cualquier ajuste de números debería salir de esas pruebas, no de la simulación.
