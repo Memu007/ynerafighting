@@ -1663,7 +1663,7 @@
     const bob=f.state==='walk'?Math.abs(Math.sin(phase))*-2:f.state==='ko'||f.state==='seated'?0:Math.round(Math.sin(phase/3));
     ctx.translate(Math.round(f.x), Math.round(f.y));
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(f.state==='ko'?20:0,3,f.state==='ko'?60:35,7,0,0,Math.PI*2);ctx.fill();
-    ctx.scale(f.dir || 1,1);
+    ctx.scale((f.dir || 1)*(f.scale||1),f.scale||1);
     const sheet=spriteSheets[sprite];
     if(sheet&&sheet.complete&&sheet.naturalWidth){
       let index=SPRITE_POSES.indexOf(spritePose(f,phase));
@@ -1719,14 +1719,22 @@
     // --- 1. PANTALLA DE TÍTULO ---
     if (gameState === STATE.TITLE) {
       drawStageBackground('gym_outside');
-      ctx.fillStyle='rgba(8,14,26,.62)';ctx.fillRect(0,0,640,400);
-      ctx.fillStyle='#dba748';ctx.fillRect(45,38,550,4);
-      ctx.textAlign='center';ctx.font='bold 38px monospace';ctx.fillStyle='#0b101b';ctx.fillText('CONURBANO',323,99);ctx.fillText('FIGHTER',323,141);
-      ctx.fillStyle='#f2d38b';ctx.fillText('CONURBANO',320,96);ctx.fillStyle='#ed6a47';ctx.fillText('FIGHTER',320,138);
-      ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL MUNDO',320,163);
-      drawFighterSprite({x:320,y:316,dir:1,state:'idle'},'lautaro_calle');
+      const dusk=ctx.createLinearGradient(0,0,0,400);dusk.addColorStop(0,'rgba(8,14,26,.78)');dusk.addColorStop(.55,'rgba(8,14,26,.45)');dusk.addColorStop(1,'rgba(8,14,26,.8)');ctx.fillStyle=dusk;ctx.fillRect(0,0,640,400);
+      // Rivales en silueta detrás del protagonista.
+      ctx.globalAlpha=.3;drawFighterSprite({x:120,y:322,dir:1,state:'idle',scale:1.05},'tito');drawFighterSprite({x:560,y:322,dir:-1,state:'idle',scale:1.05},'henderson');ctx.globalAlpha=1;
+      // Logo con relieve: sombra, extrusión y cara.
+      ctx.textAlign='center';ctx.font='bold 42px monospace';
+      for(let i=4;i>0;i--){ctx.fillStyle=i>2?'#2a1608':'#7a3a12';ctx.fillText('CONURBANO',250+i,100+i);ctx.fillText('FIGHTER',250+i,146+i);}
+      const face=ctx.createLinearGradient(0,60,0,146);face.addColorStop(0,'#fff0b8');face.addColorStop(.5,'#f2c552');face.addColorStop(1,'#d08a12');
+      ctx.fillStyle=face;ctx.fillText('CONURBANO',250,100);
+      const face2=ctx.createLinearGradient(0,110,0,150);face2.addColorStop(0,'#ffb08a');face2.addColorStop(.5,'#ed6a47');face2.addColorStop(1,'#a8321e');
+      ctx.fillStyle=face2;ctx.fillText('FIGHTER',250,146);
+      ctx.strokeStyle='#1a0e06';ctx.lineWidth=1.5;ctx.strokeText('CONURBANO',250,100);ctx.strokeText('FIGHTER',250,146);
+      ctx.fillStyle='#dba748';ctx.fillRect(60,158,380,3);
+      ctx.font='bold 13px monospace';ctx.fillStyle='#f3e4bf';ctx.fillText('DE VILLA MADERO AL MUNDO',250,176);
+      drawFighterSprite({x:470,y:324,dir:-1,state:'idle',scale:1.3},'lautaro_calle');
       ctx.fillStyle='rgba(6,11,20,.92)';ctx.fillRect(40,325,560,57);
-      ctx.strokeStyle='#dba748';ctx.strokeRect(40,325,560,57);
+      ctx.strokeStyle='#dba748';ctx.lineWidth=2;ctx.strokeRect(40,325,560,57);
       ctx.font='bold 17px monospace';ctx.fillStyle=Math.floor(Date.now()/600)%2?'#f3d18b':'#fff';ctx.fillText(savedRun?'ESPACIO · Z · CONTINUAR':'ESPACIO · Z · TOCÁ PARA EMPEZAR',320,350);
       ctx.font='10px monospace';ctx.fillStyle='#b8c4cd';ctx.fillText(savedRun?'N · TOCÁ AQUÍ PARA NUEVA PARTIDA':'FLECHAS: MOVER · Z: PIÑA · X: PATADA · C: GUARDIA · V: ESPECIAL',320,370);
       return;
@@ -1773,62 +1781,33 @@
     // --- 3. PANTALLA "VS" CLÁSICA ESTILO STREET FIGHTER II ---
     if (gameState === STATE.VS_SCREEN) {
       const f = FIGHTS[currentFightIndex];
-      ctx.fillStyle = '#0b0e1c';
-      ctx.fillRect(0, 0, 640, 400);
-
-      // Rayo amarillo central partiendo la pantalla (exacto a las imágenes)
-      ctx.fillStyle = '#ffcc00';
-      ctx.beginPath();
-      ctx.moveTo(345, 0);
-      ctx.lineTo(295, 195);
-      ctx.lineTo(340, 195);
-      ctx.lineTo(285, 400);
-      ctx.lineTo(315, 215);
-      ctx.lineTo(275, 215);
-      ctx.closePath();
-      ctx.fill();
-
-      // Marco y Retrato Izquierdo: LAUTARO
-      ctx.drawImage(getPortraitCanvas('lautaro', currentFightIndex === 1), 45, 38, 190, 190);
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(45, 38, 190, 190);
-
-      // Marco y Retrato Derecho: RIVAL
-      ctx.drawImage(getPortraitCanvas(f.portrait), 405, 38, 190, 190);
-      ctx.strokeStyle = '#ef4444';
-      ctx.strokeRect(405, 38, 190, 190);
-
-      // Nombres grandes pixelados abajo de cada retrato
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '18px monospace';
-      ctx.fillText('LAUTARO', 140, 258);
-      ctx.fillText(f.name.split(' ')[0] === '"EL' ? 'HENDERSON' : f.name, 500, 258);
-
-      // Logo VS en el centro
-      ctx.fillStyle = '#e62e2e';
-      ctx.font = '28px monospace';
-      ctx.fillText('VS', 320, 155);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.lineWidth = 2;
-      ctx.strokeText('VS', 320, 155);
-
-      // Caja de frases "Trash-Talk" estilo Street Fighter II
-      ctx.fillStyle = '#141829';
-      ctx.fillRect(30, 278, 580, 102);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.strokeRect(30, 278, 580, 102);
-
-      ctx.font = '9px monospace';
-      ctx.fillStyle = '#7dd3fc';
-      ctx.fillText(f.quotePlayer, 320, 312);
-      ctx.fillStyle = '#fca5a5';
-      ctx.fillText(f.quoteEnemy, 320, 345);
-      ctx.fillStyle = '#aaa';
-      ctx.font = '8px monospace';
-      ctx.fillText(f.subtitle, 320, 368);
-      ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText(`LAUTARO · FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,394);
+      // Entrada: los retratos se deslizan desde los costados durante los primeros 40 cuadros.
+      const slide=Math.max(0,vsTimer-170)/40, flash=vsTimer>168&&vsTimer<=172;
+      drawStageBackground(f.stage);
+      const half=ctx.createLinearGradient(0,0,640,0);half.addColorStop(0,'rgba(20,40,110,.86)');half.addColorStop(.5,'rgba(10,12,28,.9)');half.addColorStop(1,'rgba(120,20,30,.86)');
+      ctx.fillStyle=half;ctx.fillRect(0,0,640,400);
+      // Rayo central y destello al encontrarse los retratos.
+      ctx.fillStyle=flash?'#ffffff':'#ffcc00';
+      ctx.beginPath();ctx.moveTo(345,0);ctx.lineTo(295,195);ctx.lineTo(340,195);ctx.lineTo(285,400);ctx.lineTo(315,215);ctx.lineTo(275,215);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,220,120,.35)';ctx.beginPath();ctx.moveTo(352,0);ctx.lineTo(302,195);ctx.lineTo(347,195);ctx.lineTo(292,400);ctx.lineTo(322,215);ctx.lineTo(282,215);ctx.closePath();ctx.fill();
+      const lx=45-slide*300, rx=405+slide*300;
+      for(const [x,portrait,color] of [[lx,getPortraitCanvas('lautaro',currentFightIndex===1),'#3b82f6'],[rx,getPortraitCanvas(f.portrait),'#ef4444']]){
+        ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x+8,46,190,190);
+        ctx.drawImage(portrait,x,38,190,190);
+        ctx.strokeStyle=color;ctx.lineWidth=4;ctx.strokeRect(x,38,190,190);
+        ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.strokeRect(x+4,42,182,182);
+      }
+      // Nombres en placas, VS con relieve.
+      ctx.textAlign='center';ctx.font='bold 18px monospace';
+      for(const [x,name,bg] of [[140,'LAUTARO','#1d3f8f'],[500,f.name,'#8f1d2a']]){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x-100,244,200,26);ctx.fillStyle=bg;ctx.fillRect(x-96,240,192,26);ctx.fillStyle='#fff';ctx.fillText(name,x,259);}
+      ctx.font='bold 34px monospace';ctx.fillStyle='#4a0a0a';ctx.fillText('VS',323,160);ctx.fillStyle='#e62e2e';ctx.fillText('VS',320,156);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeText('VS',320,156);
+      // Frases y cartel de la fecha.
+      ctx.fillStyle='rgba(8,10,22,.92)';ctx.fillRect(30,278,580,102);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeRect(30,278,580,102);
+      ctx.fillStyle='#ffcc00';ctx.fillRect(30,278,580,16);ctx.fillStyle='#1a1408';ctx.font='bold 9px monospace';ctx.fillText(f.subtitle,320,290);
+      ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText('LAUTARO: '+f.quotePlayer,320,314);
+      ctx.fillStyle='#fca5a5';ctx.fillText(f.name+': '+f.quoteEnemy,320,344);
+      ctx.fillStyle='#7dd3fc';ctx.fillText(`FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,368);
+      ctx.fillStyle='#aaa';ctx.font='8px monospace';ctx.fillText(vsTimer<170?'[TOCÁ O ESPACIO PARA SALTAR]':'',320,394);
       return;
     }
 
@@ -1972,7 +1951,9 @@
       ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);
       drawFighterSprite({x:260,y:290,dir:1,state:'idle'},resultFight.isPrologue?'lautaro_calle':'lautaro');
       drawFighterSprite({x:380,y:290,dir:-1,state:weekResult.won?'ko':'idle'},resultFight.portrait);
-      ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);
+      if(weekResult.won){const rnd=seeded(weekResult.index*17+week);for(let i=0;i<60;i++){const x=rnd()*640,y=(rnd()*400+sceneFrame*(1+rnd()*1.5))%400;ctx.fillStyle=['#ffcc00','#e62e2e','#2b65ec','#ffffff'][i%4];ctx.fillRect(x,y,4,7);}}
+      else{ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);}
+      ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(21,13,74,74);ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeRect(25,17,66,66);
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 20px monospace';
       ctx.fillText(weekResult.won?'¡GANASTE LA PELEA!':'ESTA VEZ NO ALCANZÓ',340,44);
       ctx.fillStyle='#fff';ctx.font='13px monospace';ctx.fillText(`SÁBADO · SEMANA ${week} · VS ${weekResult.rival}`,340,68);
