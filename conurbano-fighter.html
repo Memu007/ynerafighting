@@ -167,10 +167,11 @@
     body.playing #top-bar,body.playing #guide,body.playing #career-panel,body.playing #player-panel,body.playing #save-status{display:none;}
     /* Apaisado: arena arriba, controles en una franja baja con las dos zonas en los extremos. */
     body.playing #cabinet{max-width:calc((100dvh - 16px)*1.6);border-width:3px;}
-    body.playing #controls-bar{position:fixed;left:0;right:0;bottom:0;margin:0;padding:6px 10px;grid-template-columns:1fr 1fr;column-gap:30vw;pointer-events:none;}
-    body.playing #controls-bar .pad-group{pointer-events:auto;}
-    body.playing .ctrl-btn{padding:8px 6px;min-height:52px;opacity:.82;}
-    body.playing #attack-pad{grid-template-columns:1fr 1fr;}
+    /* Los pads van a los márgenes negros que deja la arena de 16:10; sólo se superponen si la pantalla es muy angosta. */
+    body.playing #controls-bar{position:fixed;inset:0;margin:0;padding:0 6px 6px;grid-template-columns:124px 1fr 124px;align-items:end;pointer-events:none;}
+    body.playing #controls-bar .pad-group{pointer-events:auto;gap:6px;}
+    body.playing #attack-pad{grid-column:3;grid-template-columns:1fr 1fr;}
+    body.playing .ctrl-btn{padding:6px 2px;min-height:56px;font-size:10px;opacity:.88;}
   }
   #market details{margin-top:12px;}#market summary{cursor:pointer;color:#ffda62;padding:8px 0;}
   #scene-controls{width:100%;max-width:840px;margin:8px 0;}#scene-controls button{width:100%;min-height:44px;font:16px monospace;}
