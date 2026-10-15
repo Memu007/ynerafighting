@@ -32,8 +32,9 @@ Corregido: activación nativa con espacio/Enter, foco de la casilla de rutina, c
 - [x] Habitación, interior del gimnasio y cuartito del pizarrón rehechos al nivel de la fachada (ventanas con luz, ring de fondo, estante de trofeos, pizarrón con tiza). Los fondos se dibujan una vez en un canvas auxiliar y se reutilizan. Osvaldo ya tiene cuerpo propio.
 - [x] Estación Villa Madero rehecha: skyline iluminado, techo con tubos, tren con puertas, baldosas y niebla. Se usa en el prólogo y en la revancha con Braian.
 - [x] Entrenamiento como escena: Lautaro a tamaño real en el gimnasio con poses propias (press de barra, soga en el piso y en el aire, piña a la bolsa, piña y patada a las manoplas de Osvaldo). La barra, las manijas y las manoplas van en las hojas de sprites; la bolsa y la soga se dibujan en el canvas. La soga da una vuelta por vuelta del cursor; la bolsa se balancea al golpear. Umbrales, ventanas y velocidades del minijuego sin cambios.
-- [x] Escenarios por circuito: Club Social (fechas 1–2), Polideportivo Municipal (3–4), estadio cubierto (5–6) y arena de Las Vegas (internacional). Multitudes estáticas por el caché de fondo; animarlas queda pendiente. Resultado y sábado usan el ring de esa pelea.
-- [ ] Pulir portada, escenas breves entre fechas e impactos/especial. La portada y la especial ya existen; falta llevar su acabado al nivel de los retratos.
+- [x] Escenarios por circuito: Club Social (fechas 1–2), Polideportivo Municipal (3–4), estadio cubierto (5–6) y arena de Las Vegas (internacional). Las tribunas alternan dos cuadros cacheados. Resultado y sábado usan el ring de esa pelea.
+- [x] Portada con logo en relieve, Lautaro grande y rivales en silueta. Pantalla VS con el escenario de la pelea de fondo, retratos que entran desde los costados y placas de nombre. Resultado con papelitos al ganar y penumbra al perder. Impactos: chispa en piña, estrella con rayos en patada y crítico, arco verde en guardia, estela y onda en la especial, anillos en el KO, sacudida de cámara proporcional. Todo es arte aditivo: la simulación y los tiempos de pelea no cambian.
+- [x] Tribunas animadas en dos cuadros cacheados por ring; quietas en el KO.
 
 Los retratos detallados están integrados. Las correcciones de teclado, foco y pantalla móvil no completan estos pendientes de arte.
 
@@ -44,4 +45,4 @@ Nota: la sección 8 de docs/GDD.md (sprites de 40×64 y 320×224) quedó vieja; 
 - [ ] Comprobar respuesta y ergonomía en un teléfono físico. La emulación táctil y las capturas verifican geometría y eventos, pero no dedos, latencia y rendimiento del aparato.
 
 ## Siguiente paso
-Empezar por los sprites de combate y revisar una pelea con los retratos actuales. Después seguir con escenarios y ejercicios. Mantener las pruebas de dificultad y teléfono físico como verificaciones separadas.
+Los pendientes de arte de la lista están cerrados. Quedan las dos verificaciones con personas: dificultad jugando la campaña y ergonomía en un teléfono físico. Cualquier ajuste de números debería salir de esas pruebas, no de la simulación.

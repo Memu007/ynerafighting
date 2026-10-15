@@ -778,6 +778,9 @@
   let enemy = null;
   let braianAmbush = null;
   let floatingTexts = [];
+  // Efectos de impacto: chispas en el punto de contacto y sacudida de cámara. Sólo arte; no frenan la simulación.
+  let hitFx = [], shake = 0;
+  function addHitFx(x,y,kind){hitFx.push({x,y,kind,life:kind==='ko'?40:kind==='special'?26:14,max:kind==='ko'?40:kind==='special'?26:14});shake=Math.max(shake,kind==='ko'?16:kind==='special'?12:kind==='heavy'?7:kind==='light'?3:2);}
   let fightBanner = '';
   let fightBannerTimer = 0;
   let prologueHitsLanded = 0;
@@ -827,7 +830,7 @@
 
     specialFx=0;
     prologueHitsLanded = 0;
-    floatingTexts = [];
+    floatingTexts = [];hitFx=[];shake=0;
     fightTimer = 99;lastSecondTick=0;
     fightBanner = 'ROUND 1 - ¡A PELEAR!';
     fightBannerTimer = 90;
@@ -1097,7 +1100,7 @@
         enemy.hp = Math.max(180, enemy.hp - chipDmg);
         enemy.state = 'hit';
         enemy.stateTimer = 10; // Se sacude para que sientas que le pegaste
-        enemy.vx = 2.2;
+        enemy.vx = 2.2;addHitFx((player.x+enemy.x)/2,enemy.y-90,'light');
         prologueHitsLanded++;
         sfxWeakHit();
         addFloatingText(enemy.x, enemy.y - 85, `¡POCA FUERZA! -${chipDmg}`, '#ff9966');
@@ -1119,7 +1122,7 @@
       enemy.hitsTaken++;
       if(type !== 'special' && (enemy.state==='block' || (style==='counter'&&enemy.hitsTaken%4===0))) {
         totalDmg = Math.max(2, Math.round(totalDmg*(type==='kick'?.55:.22)));
-        enemy.hp = Math.max(0,enemy.hp-totalDmg);
+        enemy.hp = Math.max(0,enemy.hp-totalDmg);addHitFx((player.x+enemy.x)/2,enemy.y-88,'block');
         enemy.state='block';enemy.stateTimer=8;enemy.telegraph=style==='counter'?30:18;
         enemy.aiCooldown=12;
         player.energy=Math.min(100,player.energy+18);
@@ -1137,7 +1140,7 @@
         sfxHit(type !== 'punch');
       }
 
-      enemy.hp = Math.max(0, enemy.hp - totalDmg);
+      enemy.hp = Math.max(0, enemy.hp - totalDmg);addHitFx((player.x+enemy.x)/2,enemy.y-(type==='kick'?70:92),type==='special'?'special':type==='kick'||enemy.telegraph>0?'heavy':'light');
       if(enemy.telegraph===0){enemy.state='hit';enemy.stateTimer=type==='special'?20:7;}
       enemy.vx = player.dir * (type === 'kick' ? 6 : 3.5);
       if(type !== 'special') player.energy = Math.min(100, player.energy + 22);
@@ -1180,6 +1183,7 @@
     if (gameState !== STATE.FIGHT) return;
 
     const f = FIGHTS[currentFightIndex];
+    hitFx.forEach(h=>h.life--);hitFx=hitFx.filter(h=>h.life>0);if(shake>0)shake--;
     if(player.state==='ko'||enemy.state==='ko')return;
 
     if(specialFx>0)specialFx--;
@@ -1255,12 +1259,12 @@
 
           if (player.state === 'block') {
             const blockedDmg = f.isPrologue ? 12 : Math.max(2, Math.round(dmg * 0.22));
-            player.hp = Math.max(0, player.hp - blockedDmg);
+            player.hp = Math.max(0, player.hp - blockedDmg);addHitFx((player.x+enemy.x)/2,player.y-88,'block');
             player.energy = Math.min(100, player.energy + 15);
             sfxBlock();
             addFloatingText(player.x, player.y - 80, `GUARDIA -${blockedDmg}`, '#66dd88');
           } else {
-            player.hp = Math.max(0, player.hp - dmg);
+            player.hp = Math.max(0, player.hp - dmg);addHitFx((player.x+enemy.x)/2,player.y-90,'heavy');
             player.state = 'hit';
             player.stateTimer = 16;
             player.combo = 0;
@@ -1305,7 +1309,7 @@
       braianAmbush.x += 5.2;
       if (braianAmbush.x >= player.x - 25) {
         braianAmbush.done = true;
-        player.hp = 0;
+        player.hp = 0;addHitFx(player.x-10,player.y-100,'ko');
         sfxKO();
         addFloatingText(player.x, player.y - 95, '¡GOLPE TRAICIONERO DE ATRÁS!', '#ff2222');
       }
@@ -1313,7 +1317,7 @@
 
     // Comprobar Fin del Combate
     if (player.hp <= 0 && player.state !== 'ko') {
-      player.state = 'ko';
+      player.state = 'ko';addHitFx(player.x,player.y-90,'ko');
       sfxKO();
       setTimeout(() => {
         if (f.isPrologue) {
@@ -1324,7 +1328,7 @@
         }
       }, 1700);
     } else if (enemy.hp <= 0 && enemy.state !== 'ko') {
-      enemy.state = 'ko';
+      enemy.state = 'ko';addHitFx(enemy.x,enemy.y-90,'ko');
       sfxKO();
       fightBanner = '¡K.O. - GANADOR LAUTARO!';
       fightBannerTimer = 120;
@@ -1351,13 +1355,14 @@
   }
   // Generador determinista para multitudes y detalles repetidos: el fondo no cambia entre cuadros.
   function seeded(seed){let s=seed>>>0||1;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
-  function paintCrowd(g,x0,x1,y0,rows,seed,dark){
+  // `frame` alterna el balanceo de cada hincha sin cambiar la secuencia aleatoria de colores.
+  function paintCrowd(g,x0,x1,y0,rows,seed,dark,frame=0){
     const rnd=seeded(seed);
     const skins=['#d8a57a','#b97d55','#8c5a3a','#e8bb93','#6f4330'],shirts=['#c23a3a','#2f4f9f','#e5e1d4','#2b2b33','#d8b63c','#3f7f4e','#7a3f8f','#d16a2a'];
     for(let r=0;r<rows;r++){
       const y=y0+r*12,fade=dark?.45+r*.18:1;
       for(let x=x0+(r%2)*7;x<x1;x+=14){
-        const bob=Math.floor(rnd()*3);
+        const bob=(Math.floor(rnd()*3)+frame*(x/14%2?1:2))%3;
         g.globalAlpha=Math.min(1,fade);
         g.fillStyle=shirts[Math.floor(rnd()*shirts.length)];g.fillRect(x-5,y+7-bob,11,9);
         g.fillStyle=skins[Math.floor(rnd()*skins.length)];g.fillRect(x-3,y-bob,7,8);
@@ -1396,6 +1401,8 @@
   }
 
   function drawStageBackground(stage) {
+    // Las tribunas alternan dos cuadros cacheados; en el KO y entre peleas quedan quietas.
+    const crowdFrame=gameState===STATE.FIGHT&&player&&enemy&&player.state!=='ko'&&enemy.state!=='ko'?Math.floor(Date.now()/450)%2:0;
     const rect=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
     if(stage === 'bedroom') {
       ctx.drawImage(stageLayer('bedroom',g=>{
@@ -1558,7 +1565,7 @@
       return;
     }
     if (stage === 'club_ring') {
-      ctx.drawImage(stageLayer('club_ring',g=>{
+      ctx.drawImage(stageLayer('club_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Club Social Madero: ladrillo visto, banderines, lamparitas colgadas y vecinos en sillas plegables.
         r(0,0,640,260,'#3a1b19');for(let row=0;row<26;row++)for(let col=0;col<24;col++){const x=col*30+(row%2)*15-15;r(x,row*10,28,8,(col*7+row)%4?'#4f2321':'#5a2a26');}
@@ -1567,7 +1574,7 @@
         paintBanner(g,160,74,320,36,'#0d0d12','#ffcc00','CLUB SOCIAL MADERO',14);
         paintBanner(g,30,116,110,26,'#1d3c3b','#e4dbb9','BOXEO · MMA',9);paintBanner(g,500,116,110,26,'#8f3b2f','#f3e9c8','PANADERÍA LA UNIÓN',8);
         r(0,150,640,8,'#2a1414');
-        paintCrowd(g,10,630,164,3,7,false);
+        paintCrowd(g,10,630,164,3,7,false,crowdFrame);
         r(0,196,640,64,'#1e1216');for(let x=18;x<640;x+=32){r(x,236,22,22,'#3b3b44');r(x,236,22,4,'#5c5c66');}
         paintRing(g,'#2d3b56',['#d62424','#eeeeee','#1d4ed8'],'#34203a','#d62424');
         g.fillStyle='#8aa0c8';g.font='bold 22px monospace';g.textAlign='center';g.globalAlpha=.25;g.fillText('C.S.M.',320,345);g.globalAlpha=1;
@@ -1575,7 +1582,7 @@
       return;
     }
     if (stage === 'poli_ring') {
-      ctx.drawImage(stageLayer('poli_ring',g=>{
+      ctx.drawImage(stageLayer('poli_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Polideportivo municipal: bloques pintados, tribuna tubular, reflectores de cancha y lonas de sponsors.
         r(0,0,640,260,'#c9c3b2');for(let row=0;row<14;row++)for(let col=0;col<18;col++){const x=col*40+(row%2)*20-20;r(x,row*14,38,12,(col+row)%5?'#cfc9b8':'#c2bcab');}
@@ -1583,7 +1590,7 @@
         r(0,120,640,28,'#3a6ea5');r(0,144,640,4,'#2b4f78');g.fillStyle='#ffffff';g.font='bold 13px monospace';g.textAlign='center';g.fillText('POLIDEPORTIVO MUNICIPAL · LA MATANZA',320,139);
         paintBanner(g,20,82,150,30,'#e5e1d4','#c23a3a','GOMERÍA RUTA 3',9);paintBanner(g,240,82,160,30,'#2f4f9f','#ffffff','CERVEZA DEL OESTE',9);paintBanner(g,470,82,150,30,'#d8b63c','#2b2b33','PANADERÍA LA UNIÓN',8);
         for(let i=0;i<5;i++){r(0,152+i*22,640,20,i%2?'#8a8f99':'#9aa0ab');r(0,170+i*22,640,2,'#5f6670');}
-        paintCrowd(g,8,632,150,5,31,false);
+        paintCrowd(g,8,632,150,5,31,false,crowdFrame);
         r(0,250,640,10,'#6a7180');for(let x=0;x<640;x+=40)r(x,250,2,10,'#4a5160');
         paintRing(g,'#5b6b86',['#1d4ed8','#eeeeee','#1d4ed8'],'#2b3a5a','#1d4ed8');
         g.fillStyle='#ffffff';g.font='bold 20px monospace';g.textAlign='center';g.globalAlpha=.2;g.fillText('MUNICIPALIDAD',320,348);g.globalAlpha=1;
@@ -1591,7 +1598,7 @@
       return;
     }
     if (stage === 'estadio_ring') {
-      ctx.drawImage(stageLayer('estadio_ring',g=>{
+      ctx.drawImage(stageLayer('estadio_ring_'+crowdFrame,g=>{
         const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
         // Estadio cubierto: oscuridad, tribuna alta llena, pantalla gigante y batería de reflectores.
         r(0,0,640,260,'#0a0b14');
@@ -1599,7 +1606,7 @@
         r(0,0,640,40,'#15161f');r(0,40,640,4,'#2a2b38');for(let x=40;x<640;x+=70){r(x-14,20,28,18,'#2b2c36');r(x-10,24,20,10,'#fff7d6');paintLightCone(g,x,38,170,260,'rgba(255,250,220,A)',.13);}
         r(220,52,200,58,'#101018');r(224,56,192,50,'#1b1b2a');g.fillStyle='#ffcc00';g.font='bold 14px monospace';g.textAlign='center';g.fillText('CAMPEONATO ARGENTINO',320,76);g.fillStyle='#7dd3fc';g.font='10px monospace';g.fillText('NOCHE DE TÍTULO · BUENOS AIRES',320,96);
         for(let i=0;i<4;i++)r(0,116+i*28,640,2,'#2b2b3a');
-        paintCrowd(g,6,634,120,8,55,true);
+        paintCrowd(g,6,634,120,8,55,true,crowdFrame);
         r(0,236,640,24,'#15161f');r(0,236,640,4,'#2a2b3a');for(let x=0;x<640;x+=80){r(x+10,244,60,8,'#1d1d2a');}
         paintBanner(g,30,232,120,22,'#1d4ed8','#ffffff','CERVEZA DEL OESTE',8);paintBanner(g,490,232,120,22,'#c23a3a','#ffffff','GOMERÍA RUTA 3',8);
         paintRing(g,'#1e2a44',['#ffffff','#d62424','#ffffff'],'#101424','#eeeeee');
@@ -1609,7 +1616,7 @@
       return;
     }
     // Arena internacional (antes 'ufc_octagon').
-    ctx.drawImage(stageLayer('arena_ring',g=>{
+    ctx.drawImage(stageLayer('arena_ring_'+crowdFrame,g=>{
       const r=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h);};
       // Arena de Las Vegas: pantallas LED, humo, tribuna gigante y parrilla de luces de colores.
       r(0,0,640,260,'#05050c');
@@ -1617,7 +1624,7 @@
       r(0,0,640,34,'#0f0f1a');for(let x=20;x<640;x+=52){const i=(x/52|0)%4,c=['#ff3b6b','#3bc0ff','#ffd23b','#9b5cff'][i],cone=['rgba(255,59,107,A)','rgba(59,192,255,A)','rgba(255,210,59,A)','rgba(155,92,255,A)'][i];r(x-8,14,16,14,'#20202c');r(x-5,18,10,8,c);paintLightCone(g,x,30,120,250,cone,.1);}
       r(0,70,640,30,'#0b1120');for(let x=0;x<640;x+=4)for(let y=72;y<98;y+=4)r(x,y,3,3,(x/4+y/4)%7===0?'#ff3b6b':(x/4+y/4)%11===0?'#3bc0ff':'#121b33');
       g.fillStyle='#ffffff';g.font='bold 14px monospace';g.textAlign='center';g.fillText('LIGA MUNDIAL DE KICKBOXING · LAS VEGAS',320,90);
-      paintCrowd(g,6,634,110,9,77,true);
+      paintCrowd(g,6,634,110,9,77,true,crowdFrame);
       r(0,216,640,44,'#0d0f1c');for(let x=0;x<640;x+=4)for(let y=220;y<256;y+=4)r(x,y,3,3,(x/4|0)%40<20?'#1b2b5c':'#5c1b2b');
       g.fillStyle='#ffffff';g.font='bold 18px monospace';g.fillText('WORLD TITLE · CINTURÓN',320,243);
       paintRing(g,'#e9e4d6',['#d62424','#1d4ed8','#d62424'],'#111120','#111120');
@@ -1656,7 +1663,7 @@
     const bob=f.state==='walk'?Math.abs(Math.sin(phase))*-2:f.state==='ko'||f.state==='seated'?0:Math.round(Math.sin(phase/3));
     ctx.translate(Math.round(f.x), Math.round(f.y));
     ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(f.state==='ko'?20:0,3,f.state==='ko'?60:35,7,0,0,Math.PI*2);ctx.fill();
-    ctx.scale(f.dir || 1,1);
+    ctx.scale((f.dir || 1)*(f.scale||1),f.scale||1);
     const sheet=spriteSheets[sprite];
     if(sheet&&sheet.complete&&sheet.naturalWidth){
       let index=SPRITE_POSES.indexOf(spritePose(f,phase));
@@ -1675,6 +1682,28 @@
   // ========================================================
   // 10. DIBUJO DE PANTALLAS PRINCIPALES
   // ========================================================
+  function drawHitFx(){
+    for(const h of hitFx){
+      const t=1-h.life/h.max;
+      ctx.save();ctx.translate(h.x,h.y);
+      if(h.kind==='block'){
+        ctx.strokeStyle='#8ff0a8';ctx.lineWidth=3;ctx.globalAlpha=1-t;ctx.beginPath();ctx.arc(0,0,14+t*18,-.9,.9);ctx.stroke();
+      }else if(h.kind==='ko'||h.kind==='special'){
+        ctx.strokeStyle=h.kind==='ko'?'#ffffff':'#ffd23b';ctx.lineWidth=5*(1-t)+1;ctx.globalAlpha=1-t;
+        ctx.beginPath();ctx.ellipse(0,0,20+t*110,12+t*60,0,0,Math.PI*2);ctx.stroke();
+        ctx.beginPath();ctx.ellipse(0,0,10+t*70,6+t*38,0,0,Math.PI*2);ctx.stroke();
+      }else{
+        // Chispa de impacto: estrella que se abre y se apaga, con rayos en los golpes fuertes.
+        const r=h.kind==='heavy'?22:14,scale=.6+t*.8;ctx.rotate(t*1.2);ctx.globalAlpha=1-t*t;
+        ctx.fillStyle=t<.35?'#fff6c8':'#ffb43b';ctx.beginPath();
+        for(let i=0;i<10;i++){const ang=i*Math.PI/5,rr=(i%2?r*.35:r)*scale;i?ctx.lineTo(Math.cos(ang)*rr,Math.sin(ang)*rr):ctx.moveTo(Math.cos(ang)*rr,Math.sin(ang)*rr);}
+        ctx.closePath();ctx.fill();
+        if(h.kind==='heavy'){ctx.strokeStyle='#fff6c8';ctx.lineWidth=2;for(let i=0;i<6;i++){const ang=i*Math.PI/3+.4;ctx.beginPath();ctx.moveTo(Math.cos(ang)*r*scale,Math.sin(ang)*r*scale);ctx.lineTo(Math.cos(ang)*(r+22)*scale,Math.sin(ang)*(r+22)*scale);ctx.stroke();}}
+      }
+      ctx.restore();
+    }
+  }
+
   function draw() {
     ctx.clearRect(0, 0, 640, 400);
 
@@ -1690,14 +1719,22 @@
     // --- 1. PANTALLA DE TÍTULO ---
     if (gameState === STATE.TITLE) {
       drawStageBackground('gym_outside');
-      ctx.fillStyle='rgba(8,14,26,.62)';ctx.fillRect(0,0,640,400);
-      ctx.fillStyle='#dba748';ctx.fillRect(45,38,550,4);
-      ctx.textAlign='center';ctx.font='bold 38px monospace';ctx.fillStyle='#0b101b';ctx.fillText('CONURBANO',323,99);ctx.fillText('FIGHTER',323,141);
-      ctx.fillStyle='#f2d38b';ctx.fillText('CONURBANO',320,96);ctx.fillStyle='#ed6a47';ctx.fillText('FIGHTER',320,138);
-      ctx.font='13px monospace';ctx.fillStyle='#e0daca';ctx.fillText('DE VILLA MADERO AL MUNDO',320,163);
-      drawFighterSprite({x:320,y:316,dir:1,state:'idle'},'lautaro_calle');
+      const dusk=ctx.createLinearGradient(0,0,0,400);dusk.addColorStop(0,'rgba(8,14,26,.78)');dusk.addColorStop(.55,'rgba(8,14,26,.45)');dusk.addColorStop(1,'rgba(8,14,26,.8)');ctx.fillStyle=dusk;ctx.fillRect(0,0,640,400);
+      // Rivales en silueta detrás del protagonista.
+      ctx.globalAlpha=.3;drawFighterSprite({x:120,y:322,dir:1,state:'idle',scale:1.05},'tito');drawFighterSprite({x:560,y:322,dir:-1,state:'idle',scale:1.05},'henderson');ctx.globalAlpha=1;
+      // Logo con relieve: sombra, extrusión y cara.
+      ctx.textAlign='center';ctx.font='bold 42px monospace';
+      for(let i=4;i>0;i--){ctx.fillStyle=i>2?'#2a1608':'#7a3a12';ctx.fillText('CONURBANO',250+i,100+i);ctx.fillText('FIGHTER',250+i,146+i);}
+      const face=ctx.createLinearGradient(0,60,0,146);face.addColorStop(0,'#fff0b8');face.addColorStop(.5,'#f2c552');face.addColorStop(1,'#d08a12');
+      ctx.fillStyle=face;ctx.fillText('CONURBANO',250,100);
+      const face2=ctx.createLinearGradient(0,110,0,150);face2.addColorStop(0,'#ffb08a');face2.addColorStop(.5,'#ed6a47');face2.addColorStop(1,'#a8321e');
+      ctx.fillStyle=face2;ctx.fillText('FIGHTER',250,146);
+      ctx.strokeStyle='#1a0e06';ctx.lineWidth=1.5;ctx.strokeText('CONURBANO',250,100);ctx.strokeText('FIGHTER',250,146);
+      ctx.fillStyle='#dba748';ctx.fillRect(60,158,380,3);
+      ctx.font='bold 13px monospace';ctx.fillStyle='#f3e4bf';ctx.fillText('DE VILLA MADERO AL MUNDO',250,176);
+      drawFighterSprite({x:470,y:324,dir:-1,state:'idle',scale:1.3},'lautaro_calle');
       ctx.fillStyle='rgba(6,11,20,.92)';ctx.fillRect(40,325,560,57);
-      ctx.strokeStyle='#dba748';ctx.strokeRect(40,325,560,57);
+      ctx.strokeStyle='#dba748';ctx.lineWidth=2;ctx.strokeRect(40,325,560,57);
       ctx.font='bold 17px monospace';ctx.fillStyle=Math.floor(Date.now()/600)%2?'#f3d18b':'#fff';ctx.fillText(savedRun?'ESPACIO · Z · CONTINUAR':'ESPACIO · Z · TOCÁ PARA EMPEZAR',320,350);
       ctx.font='10px monospace';ctx.fillStyle='#b8c4cd';ctx.fillText(savedRun?'N · TOCÁ AQUÍ PARA NUEVA PARTIDA':'FLECHAS: MOVER · Z: PIÑA · X: PATADA · C: GUARDIA · V: ESPECIAL',320,370);
       return;
@@ -1744,68 +1781,41 @@
     // --- 3. PANTALLA "VS" CLÁSICA ESTILO STREET FIGHTER II ---
     if (gameState === STATE.VS_SCREEN) {
       const f = FIGHTS[currentFightIndex];
-      ctx.fillStyle = '#0b0e1c';
-      ctx.fillRect(0, 0, 640, 400);
-
-      // Rayo amarillo central partiendo la pantalla (exacto a las imágenes)
-      ctx.fillStyle = '#ffcc00';
-      ctx.beginPath();
-      ctx.moveTo(345, 0);
-      ctx.lineTo(295, 195);
-      ctx.lineTo(340, 195);
-      ctx.lineTo(285, 400);
-      ctx.lineTo(315, 215);
-      ctx.lineTo(275, 215);
-      ctx.closePath();
-      ctx.fill();
-
-      // Marco y Retrato Izquierdo: LAUTARO
-      ctx.drawImage(getPortraitCanvas('lautaro', currentFightIndex === 1), 45, 38, 190, 190);
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(45, 38, 190, 190);
-
-      // Marco y Retrato Derecho: RIVAL
-      ctx.drawImage(getPortraitCanvas(f.portrait), 405, 38, 190, 190);
-      ctx.strokeStyle = '#ef4444';
-      ctx.strokeRect(405, 38, 190, 190);
-
-      // Nombres grandes pixelados abajo de cada retrato
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '18px monospace';
-      ctx.fillText('LAUTARO', 140, 258);
-      ctx.fillText(f.name.split(' ')[0] === '"EL' ? 'HENDERSON' : f.name, 500, 258);
-
-      // Logo VS en el centro
-      ctx.fillStyle = '#e62e2e';
-      ctx.font = '28px monospace';
-      ctx.fillText('VS', 320, 155);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.lineWidth = 2;
-      ctx.strokeText('VS', 320, 155);
-
-      // Caja de frases "Trash-Talk" estilo Street Fighter II
-      ctx.fillStyle = '#141829';
-      ctx.fillRect(30, 278, 580, 102);
-      ctx.strokeStyle = '#ffcc00';
-      ctx.strokeRect(30, 278, 580, 102);
-
-      ctx.font = '9px monospace';
-      ctx.fillStyle = '#7dd3fc';
-      ctx.fillText(f.quotePlayer, 320, 312);
-      ctx.fillStyle = '#fca5a5';
-      ctx.fillText(f.quoteEnemy, 320, 345);
-      ctx.fillStyle = '#aaa';
-      ctx.font = '8px monospace';
-      ctx.fillText(f.subtitle, 320, 368);
-      ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText(`LAUTARO · FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,394);
+      // Entrada: los retratos se deslizan desde los costados durante los primeros 40 cuadros.
+      const slide=Math.max(0,vsTimer-170)/40, flash=vsTimer>168&&vsTimer<=172;
+      drawStageBackground(f.stage);
+      const half=ctx.createLinearGradient(0,0,640,0);half.addColorStop(0,'rgba(20,40,110,.86)');half.addColorStop(.5,'rgba(10,12,28,.9)');half.addColorStop(1,'rgba(120,20,30,.86)');
+      ctx.fillStyle=half;ctx.fillRect(0,0,640,400);
+      // Rayo central y destello al encontrarse los retratos.
+      ctx.fillStyle=flash?'#ffffff':'#ffcc00';
+      ctx.beginPath();ctx.moveTo(345,0);ctx.lineTo(295,195);ctx.lineTo(340,195);ctx.lineTo(285,400);ctx.lineTo(315,215);ctx.lineTo(275,215);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,220,120,.35)';ctx.beginPath();ctx.moveTo(352,0);ctx.lineTo(302,195);ctx.lineTo(347,195);ctx.lineTo(292,400);ctx.lineTo(322,215);ctx.lineTo(282,215);ctx.closePath();ctx.fill();
+      const lx=45-slide*300, rx=405+slide*300;
+      for(const [x,portrait,color] of [[lx,getPortraitCanvas('lautaro',currentFightIndex===1),'#3b82f6'],[rx,getPortraitCanvas(f.portrait),'#ef4444']]){
+        ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x+8,46,190,190);
+        ctx.drawImage(portrait,x,38,190,190);
+        ctx.strokeStyle=color;ctx.lineWidth=4;ctx.strokeRect(x,38,190,190);
+        ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=1;ctx.strokeRect(x+4,42,182,182);
+      }
+      // Nombres en placas, VS con relieve.
+      ctx.textAlign='center';ctx.font='bold 18px monospace';
+      for(const [x,name,bg] of [[140,'LAUTARO','#1d3f8f'],[500,f.name,'#8f1d2a']]){ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x-100,244,200,26);ctx.fillStyle=bg;ctx.fillRect(x-96,240,192,26);ctx.fillStyle='#fff';ctx.fillText(name,x,259);}
+      ctx.font='bold 34px monospace';ctx.fillStyle='#4a0a0a';ctx.fillText('VS',323,160);ctx.fillStyle='#e62e2e';ctx.fillText('VS',320,156);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeText('VS',320,156);
+      // Frases y cartel de la fecha.
+      ctx.fillStyle='rgba(8,10,22,.92)';ctx.fillRect(30,278,580,102);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeRect(30,278,580,102);
+      ctx.fillStyle='#ffcc00';ctx.fillRect(30,278,580,16);ctx.fillStyle='#1a1408';ctx.font='bold 9px monospace';ctx.fillText(f.subtitle,320,290);
+      ctx.font='9px monospace';ctx.fillStyle='#7dd3fc';ctx.fillText('LAUTARO: '+f.quotePlayer,320,314);
+      ctx.fillStyle='#fca5a5';ctx.fillText(f.name+': '+f.quoteEnemy,320,344);
+      ctx.fillStyle='#7dd3fc';ctx.fillText(`FUERZA ${playerStats.fuerza} · VELOCIDAD ${playerStats.velocidad} · AGUANTE ${playerStats.aguante} · TÉCNICA ${playerStats.tecnica}`,320,368);
+      ctx.fillStyle='#aaa';ctx.font='8px monospace';ctx.fillText(vsTimer<170?'[TOCÁ O ESPACIO PARA SALTAR]':'',320,394);
       return;
     }
 
     // --- 4. COMBATE EN VIVO ---
     if (gameState === STATE.FIGHT) {
       const f = FIGHTS[currentFightIndex];
+      ctx.save();
+      if(shake>0){const a=shake*.6;ctx.translate(Math.round((Math.random()-.5)*a*2),Math.round((Math.random()-.5)*a));}
       drawStageBackground(f.stage);
       if(specialFx>0){
         const t=(38-specialFx)/38;
@@ -1871,7 +1881,8 @@
       ctx.font = '16px monospace';
       ctx.fillText(String(fightTimer).padStart(2, '0'), 320, 38);
 
-      // Luchadores
+      // Luchadores; la especial deja estelas del jugador detrás del avance.
+      if(specialFx>0){for(let k=3;k>0;k--){ctx.globalAlpha=.12*k;drawFighterSprite({...player,x:player.x-player.dir*k*16},f.isPrologue?'lautaro_calle':'lautaro');}ctx.globalAlpha=1;}
       drawFighterSprite(player, f.isPrologue ? 'lautaro_calle' : 'lautaro');
       drawFighterSprite(enemy, f.portrait);
 
@@ -1887,6 +1898,7 @@
         drawFighterSprite({ x: braianAmbush.x, y: braianAmbush.y, dir: 1, state: 'attack' }, 'braian');
       }
 
+      drawHitFx();
       // Textos de daño flotantes
       ctx.font = '9px monospace';
       ctx.textAlign = 'center';
@@ -1905,6 +1917,7 @@
         ctx.font = '11px monospace';
         ctx.fillText(fightBanner, 320, 181);
       }
+      ctx.restore();
       return;
     }
 
@@ -1938,7 +1951,9 @@
       ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);
       drawFighterSprite({x:260,y:290,dir:1,state:'idle'},resultFight.isPrologue?'lautaro_calle':'lautaro');
       drawFighterSprite({x:380,y:290,dir:-1,state:weekResult.won?'ko':'idle'},resultFight.portrait);
-      ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);
+      if(weekResult.won){const rnd=seeded(weekResult.index*17+week);for(let i=0;i<60;i++){const x=rnd()*640,y=(rnd()*400+sceneFrame*(1+rnd()*1.5))%400;ctx.fillStyle=['#ffcc00','#e62e2e','#2b65ec','#ffffff'][i%4];ctx.fillRect(x,y,4,7);}}
+      else{ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(0,0,640,400);}
+      ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(21,13,74,74);ctx.drawImage(getPortraitCanvas('osvaldo'),25,17,66,66);ctx.strokeStyle='#ffcc00';ctx.lineWidth=2;ctx.strokeRect(25,17,66,66);
       ctx.textAlign='center';ctx.fillStyle='#ffcc00';ctx.font='bold 20px monospace';
       ctx.fillText(weekResult.won?'¡GANASTE LA PELEA!':'ESTA VEZ NO ALCANZÓ',340,44);
       ctx.fillStyle='#fff';ctx.font='13px monospace';ctx.fillText(`SÁBADO · SEMANA ${week} · VS ${weekResult.rival}`,340,68);
