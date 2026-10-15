@@ -361,7 +361,7 @@ class Cuerpo:
         if cab == "vincha":
             def franjas(x, y):
                 return BLANCO if int(y - (hy - 7)) % 4 in (1, 2) else CELESTE
-            for fin in (((hx - 16, hy - 8), (hx - 25, hy - 3)), ((hx - 15, hy - 2), (hx - 22, hy + 6))):
+            for fin in () if ko else (((hx - 16, hy - 8), (hx - 25, hy - 3)), ((hx - 15, hy - 2), (hx - 22, hy + 6))):  # sin colas en el KO
                 L.capsula((hx - 8, hy - 5), fin[0], 2.4, 2.0, franjas, lejos=1, linea=4)
                 L.capsula(fin[0], fin[1], 2.0, 1.2, franjas, lejos=1, linea=4)
             L.elipse((hx - 8.5, hy - 5), 2.6, 2.8, franjas, 0, lejos=1)

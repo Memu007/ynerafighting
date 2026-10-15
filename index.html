@@ -779,7 +779,7 @@
   let braianAmbush = null;
   let floatingTexts = [];
   // Efectos de impacto: chispas en el punto de contacto y sacudida de cámara. Sólo arte; no frenan la simulación.
-  let hitFx = [], shake = 0;
+  let hitFx = [], shake = 0, simFrame = 0;
   function addHitFx(x,y,kind){hitFx.push({x,y,kind,life:kind==='ko'?40:kind==='special'?26:14,max:kind==='ko'?40:kind==='special'?26:14});shake=Math.max(shake,kind==='ko'?16:kind==='special'?12:kind==='heavy'?7:kind==='light'?3:2);}
   let fightBanner = '';
   let fightBannerTimer = 0;
@@ -1154,6 +1154,7 @@
   // ========================================================
   function update() {
     if(document.hidden)return;
+    simFrame++;
     if(gameState===STATE.TRAIN_TRAVEL){sceneFrame++;if(sceneFrame>=110)finishTravel();return;}
     if(gameState === STATE.WEEK_RESULT){sceneFrame++;return;}
     if (gameState === STATE.ARRIVAL) { sceneFrame++; if (sceneFrame >= 330) { gameState = STATE.COACH; startBGM('gym'); } return; }
@@ -1815,7 +1816,7 @@
     if (gameState === STATE.FIGHT) {
       const f = FIGHTS[currentFightIndex];
       ctx.save();
-      if(shake>0){const a=shake*.6;ctx.translate(Math.round((Math.random()-.5)*a*2),Math.round((Math.random()-.5)*a));}
+      if(shake>0){const a=shake*.6,r=(simFrame*1103515245+12345)>>>0;ctx.translate(Math.round(((r>>>16)%1000/1000-.5)*a*2),Math.round(((r>>>4)%1000/1000-.5)*a));}  // sacudida determinista por cuadro de simulación
       drawStageBackground(f.stage);
       if(specialFx>0){
         const t=(38-specialFx)/38;
