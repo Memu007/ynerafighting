@@ -113,8 +113,8 @@ POSES = {
                      cadera_b=(42, 80), rodilla_b=(26, 104), tobillo_b=(14, 124), punta_b=(22, 127),
                      cadera_f=(62, 80), rodilla_f=(80, 100), tobillo_f=(88, 122), punta_f=(96, 125)),
     # Tirado de espaldas, cabeza a la izquierda. Se dibuja en coordenadas de celda (ya con DX).
-    "ko": dict(cabeza=(18, 110), torso_arriba=(40, 108), torso_abajo=(62, 110),
-               hombro_b=(36, 96), codo_b=(24, 90), muneca_b=(14, 94), puno_b=(8, 98),
+    "ko": dict(cabeza=(16, 104), torso_arriba=(42, 108), torso_abajo=(62, 110),
+               hombro_b=(40, 96), codo_b=(26, 86), muneca_b=(12, 80), puno_b=(4, 76),
                hombro_f=(40, 118), codo_f=(54, 124), muneca_f=(66, 122), puno_f=(72, 120),
                cadera_b=(72, 102), rodilla_b=(92, 100), tobillo_b=(110, 104), punta_b=(114, 96),
                cadera_f=(74, 114), rodilla_f=(94, 116), tobillo_f=(112, 118), punta_f=(118, 110), tirado=True),
@@ -289,7 +289,8 @@ class Cuerpo:
             L.elipse((ta[0] - 8, ta[1] + 7), 11, 8, self.TOP, 8, lejos=1, linea=None)
             L.elipse((ta[0] + 8, ta[1] + 7), 11.5, 8.5, self.TOP, -8, linea=None)
             if self.s["top"] == "buzo":
-                L.elipse((P["cabeza"][0] - 9, P["cabeza"][1] + 9), 9, 6, self.TOP, -30, lejos=1)  # capucha caída
+                L.elipse((P["cabeza"][0] - 5, P["cabeza"][1] + 13), 11, 4.5, self.TOP, -8, lejos=1)  # capucha caída sobre la nuca
+                L.elipse((P["cabeza"][0] - 12, P["cabeza"][1] + 9), 4.5, 6, self.TOP, 20, lejos=1, linea=4)
                 for k in range(0, 18, 2):  # cordones
                     L.pintar(ta[0] + 2, ta[1] + k, BLANCO[2], BLANCO)
                     L.pintar(ta[0] + 7, ta[1] + k, BLANCO[2], BLANCO)
